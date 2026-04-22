@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="MindCare Dashboard - Track your mental wellness journey.">
+    <title>My Dashboard — MindCare</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="dashboard.css">
+</head>
+
+<body>
+    <div class="bg-blob blob-1"></div>
+    <div class="bg-blob blob-2"></div>
+
+    <div class="dashboard-wrapper">
+
+        <!-- Top Navigation -->
+        <nav class="dash-nav">
+            <a href="home.html" class="btn-back" aria-label="Go back to Home">
+                <i class="fa-solid fa-arrow-left"></i>
+                <span>Home Hub</span>
+            </a>
+            <div class="nav-title">
+                <i class="fa-solid fa-chart-pie"></i> My Wellness Dashboard
+            </div>
+            <button class="btn-profile" title="Profile Settings">
+                <i class="fa-solid fa-user-astronaut"></i>
+            </button>
+        </nav>
+
+        <main class="dash-main">
+            <section class="stats-grid">
+                <div class="stat-card score-card">
+                    <div class="stat-icon"><i class="fa-solid fa-heart-pulse"></i></div>
+                    <div class="stat-info">
+                        <h3>Wellness Score</h3>
+                        <div class="score-display">
+                            <span class="score-value" id="dashScore">0</span>
+                            <span class="score-total">/ 40</span>
+                        </div>
+                        <p class="stat-subtitle" id="scoreStatus">Looking good!</p>
+                    </div>
+                </div>
+
+                <div class="stat-card sessions-card">
+                    <div class="stat-icon"><i class="fa-solid fa-brain"></i></div>
+                    <div class="stat-info">
+                        <h3>Check-ins</h3>
+                        <div class="session-display">
+                            <span class="session-value" id="dashSessions">0</span>
+                        </div>
+                        <p class="stat-subtitle">Total mood logs & sessions</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-grid">
+
+                <!-- Chart Panel -->
+                <div class="chart-panel">
+                    <div class="panel-header">
+                        <h2>Mood History</h2>
+                        <select id="chartFilter" class="filter-dropdown">
+                            <option value="7">Last 7 Days</option>
+                            <option value="30">Last 30 Days</option>
+                        </select>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="moodChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Side Panel Insights -->
+                <div class="insights-panel">
+                    <div class="panel-header">
+                        <h2>Personal Insights</h2>
+                    </div>
+                    <ul class="insights-list">
+                        <li>
+                            <i class="fa-solid fa-lightbulb text-accent"></i>
+                            <div class="insight-text">
+                                <strong>Consistent Logging:</strong> You've logged your mood 4 days in a row! This helps
+                                build better emotional awareness.
+                            </div>
+                        </li>
+                        <li>
+                            <i class="fa-solid fa-arrow-trend-up text-primary"></i>
+                            <div class="insight-text">
+                                <strong>Upward Trend:</strong> Your wellness score has improved by 15% compared to last
+                                week. Great job!
+                            </div>
+                        </li>
+                        <li>
+                            <i class="fa-solid fa-spa text-success"></i>
+                            <div class="insight-text">
+                                <strong>Recommendation:</strong> Based on your recent "Okay" days, trying out a 5-minute
+                                deep breathing exercise might give you a boost.
+                            </div>
+                        </li>
+                    </ul>
+
+                    <a href="resources.html" class="btn-action">
+                        Explore Resources <i class="fa-solid fa-arrow-right"></i>
+                    </a>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="dashboard.js"></script>
+</body>
+
+</html>
