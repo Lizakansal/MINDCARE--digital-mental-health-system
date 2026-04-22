@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Tell us about yourself — MindCare personalized onboarding quiz.">
+    <title>Getting to Know You — MindCare</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="onboarding.css">
+</head>
+
+<body>
+    <!-- Decorative blobs (reused from style.css) -->
+    <div class="bg-blob blob-1"></div>
+    <div class="bg-blob blob-2"></div>
+
+    <!-- ══════════════════════════════════════════
+         SCREEN 0 — Language Selection
+    ══════════════════════════════════════════ -->
+    <div id="langScreen" class="ob-screen active">
+        <div class="ob-card lang-card">
+            <div class="ob-logo">
+                <i class="fa-solid fa-heart-pulse"></i>
+            </div>
+            <h1 class="ob-title">Welcome to <span>MindCare</span></h1>
+            <p class="ob-subtitle">
+                Choose your preferred language<br>
+                <span class="hi-text">अपनी पसंदीदा भाषा चुनें</span>
+            </p>
+
+            <div class="lang-options">
+                <button class="lang-btn" id="btnEnglish" onclick="selectLang('en')" aria-label="Continue in English">
+                    <span class="lang-flag">🇬🇧</span>
+                    <span class="lang-name">English</span>
+                    <span class="lang-sub">Continue in English</span>
+                    <div class="lang-check"><i class="fa-solid fa-check"></i></div>
+                </button>
+                <button class="lang-btn" id="btnHindi" onclick="selectLang('hi')" aria-label="हिंदी में जारी रखें">
+                    <span class="lang-flag">🇮🇳</span>
+                    <span class="lang-name">हिंदी</span>
+                    <span class="lang-sub">हिंदी में जारी रखें</span>
+                    <div class="lang-check"><i class="fa-solid fa-check"></i></div>
+                </button>
+            </div>
+
+            <p class="lang-note">
+                <i class="fa-solid fa-shield-halved"></i>
+                Your responses are private and only used to personalize your experience.
+            </p>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         SCREEN 1 — Quiz
+    ══════════════════════════════════════════ -->
+    <div id="quizScreen" class="ob-screen">
+        <div class="ob-card quiz-card">
+
+            <!-- Top bar -->
+            <div class="quiz-topbar">
+                <div class="quiz-meta">
+                    <span class="q-badge" id="qBadge">Q 1 / 10</span>
+                    <span class="q-category" id="qCategory">Mood</span>
+                </div>
+                <button class="btn-lang-switch" id="btnLangSwitch" onclick="switchLang()" title="Switch language">
+                    <i class="fa-solid fa-language"></i>
+                </button>
+            </div>
+
+            <!-- Progress bar -->
+            <div class="progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" id="progressBar">
+                <div class="progress-fill" id="progressFill" style="width:10%"></div>
+                <div class="progress-glow" id="progressGlow" style="left:10%"></div>
+            </div>
+
+            <!-- Question area -->
+            <div class="question-area" id="questionArea">
+                <div class="q-icon" id="qIcon">😊</div>
+                <h2 class="q-text" id="qText">Loading…</h2>
+            </div>
+
+            <!-- Options -->
+            <div class="options-grid" id="optionsGrid">
+                <!-- Injected by JS -->
+            </div>
+
+            <!-- Nav -->
+            <div class="quiz-nav">
+                <button class="btn-nav btn-prev" id="btnPrev" onclick="prevQuestion()">
+                    <i class="fa-solid fa-arrow-left"></i>
+                    <span id="backLabel">Back</span>
+                </button>
+                <button class="btn-nav btn-skip" id="btnSkip" onclick="skipQuestion()">
+                    <span id="skipLabel">Skip</span>
+                    <i class="fa-solid fa-forward"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         SCREEN 2 — Results
+    ══════════════════════════════════════════ -->
+    <div id="resultScreen" class="ob-screen">
+        <div class="ob-card result-card">
+
+            <div class="result-header">
+                <div class="result-emoji" id="resultEmoji">🌟</div>
+                <h2 class="result-level" id="resultLevel">Thriving</h2>
+                <p class="result-msg" id="resultMsg">You seem to be in a great place!</p>
+            </div>
+
+            <!-- Animated SVG score ring -->
+            <div class="score-ring-wrap">
+                <svg class="score-ring" viewBox="0 0 120 120" aria-hidden="true">
+                    <circle class="ring-bg" cx="60" cy="60" r="50" />
+                    <circle class="ring-fill" id="ringFill" cx="60" cy="60" r="50" />
+                </svg>
+                <div class="score-center">
+                    <span class="score-num" id="scoreNum">0</span>
+                    <span class="score-den">/40</span>
+                </div>
+            </div>
+
+            <!-- Category tags -->
+            <div class="result-tags" id="resultTags"></div>
+
+            <!-- Personalised tip -->
+            <div class="result-tip" id="resultTip"></div>
+
+            <!-- CTA -->
+            <div class="result-actions">
+                <button class="btn-login btn-dashboard" id="btnDashboard" onclick="goToDashboard()">
+                    <span id="dashLabel">Go to Dashboard</span>
+                    <i class="fa-solid fa-arrow-right btn-icon"></i>
+                </button>
+                <button class="btn-retake" id="btnRetake" onclick="retakeQuiz()">
+                    <i class="fa-solid fa-rotate-right"></i>
+                    <span id="retakeLabel">Retake Quiz</span>
+                </button>
+            </div>
+
+            <p class="crisis-note" style="margin-top:1.2rem;">
+                <i class="fa-solid fa-phone-volume"></i>
+                <span id="crisisLabel">In crisis? Call</span>
+                <a href="tel:9152987821">iCall: 9152987821</a>
+            </p>
+        </div>
+    </div>
+
+    <script src="onboarding.js"></script>
+</body>
+
+</html>

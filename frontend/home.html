@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="Welcome to MindCare — your personal mental wellness hub. Choose where you'd like to go.">
+    <title>Welcome — MindCare</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="home.css">
+</head>
+
+<body>
+    <!-- Decorative blobs -->
+    <div class="bg-blob blob-1"></div>
+    <div class="bg-blob blob-2"></div>
+    <div class="bg-blob blob-3"></div>
+
+    <!-- ── MAIN HUB WRAPPER ── -->
+    <div class="hub-wrapper" id="hubWrapper">
+
+        <!-- ── TOP GREETING SECTION ── -->
+        <header class="hub-header">
+            <div class="hub-logo">
+                <i class="fa-solid fa-heart-pulse"></i>
+            </div>
+
+            <div class="hub-greeting">
+                <p class="greeting-small" id="timeGreeting">Good Morning</p>
+                <h1 class="greeting-name">Welcome back, <span id="userName">Friend</span> 👋</h1>
+                <p class="greeting-sub">How are you feeling today? We're here for you.</p>
+            </div>
+
+            <!-- Mood quick-check pill -->
+            <div class="mood-pill">
+                <span class="mood-label">Today's mood:</span>
+                <div class="mood-emojis" id="moodEmojis">
+                    <button class="mood-btn" data-mood="great" title="Great" aria-label="Feeling great">😄</button>
+                    <button class="mood-btn" data-mood="good" title="Good" aria-label="Feeling good">🙂</button>
+                    <button class="mood-btn" data-mood="okay" title="Okay" aria-label="Feeling okay">😐</button>
+                    <button class="mood-btn" data-mood="low" title="Low" aria-label="Feeling low">😔</button>
+                    <button class="mood-btn" data-mood="rough" title="Rough" aria-label="Feeling rough">😟</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- ── AFFIRMATION BANNER ── -->
+        <div class="affirmation-banner" id="affirmationBanner">
+            <i class="fa-solid fa-quote-left"></i>
+            <p id="affirmationText">You are stronger than you think. One step at a time.</p>
+            <button class="refresh-quote" id="refreshQuote" title="New quote" aria-label="Refresh quote">
+                <i class="fa-solid fa-rotate-right"></i>
+            </button>
+        </div>
+
+        <!-- ── SECTION HEADING ── -->
+        <div class="section-heading">
+            <h2>Where would you like to go?</h2>
+            <p>Choose an area to explore or continue your journey</p>
+        </div>
+
+        <!-- ── NAVIGATION CARDS GRID ── -->
+        <div class="hub-grid" id="hubGrid">
+
+            <!-- Card 1 — Dashboard -->
+            <a href="dashboard.html" class="hub-card card-dashboard" id="cardDashboard">
+                <div class="card-glow"></div>
+                <div class="card-icon-wrap">
+                    <i class="fa-solid fa-chart-line"></i>
+                </div>
+                <div class="card-body">
+                    <h3 class="card-title">My Dashboard</h3>
+                    <p class="card-desc">View your wellness score, mood history, progress streaks, and personalised
+                        insights.</p>
+                </div>
+                <div class="card-arrow">
+                    <i class="fa-solid fa-arrow-right"></i>
+                </div>
+                <div class="card-badge">Your Space</div>
+            </a>
+
+            <!-- Card 2 — Chatbot -->
+            <a href="chatbot.html" class="hub-card card-chatbot" id="cardChatbot">
+                <div class="card-glow"></div>
+                <div class="card-icon-wrap">
+                    <i class="fa-solid fa-robot"></i>
+                </div>
+                <div class="card-body">
+                    <h3 class="card-title">Talk to MindBot</h3>
+                    <p class="card-desc">Need someone to listen? Chat with our AI companion — available 24/7, always
+                        judgement-free.</p>
+                </div>
+                <div class="card-arrow">
+                    <i class="fa-solid fa-arrow-right"></i>
+                </div>
+                <div class="card-badge card-badge--live">
+                    <span class="live-dot"></span> Live
+                </div>
+            </a>
+
+            <!-- Card 3 — Resources -->
+            <a href="resources.html" class="hub-card card-resources" id="cardResources">
+                <div class="card-glow"></div>
+                <div class="card-icon-wrap">
+                    <i class="fa-solid fa-book-open-reader"></i>
+                </div>
+                <div class="card-body">
+                    <h3 class="card-title">Resources</h3>
+                    <p class="card-desc">Explore guided meditations, breathing exercises, articles, and coping
+                        strategies.</p>
+                </div>
+                <div class="card-arrow">
+                    <i class="fa-solid fa-arrow-right"></i>
+                </div>
+                <div class="card-badge">Explore</div>
+            </a>
+
+            <!-- Card 4 — Assessment Quiz -->
+            <a href="onboarding.html" class="hub-card card-quiz" id="cardQuiz">
+                <div class="card-glow"></div>
+                <div class="card-icon-wrap">
+                    <i class="fa-solid fa-clipboard-question"></i>
+                </div>
+                <div class="card-body">
+                    <h3 class="card-title">Mental Health Assessment</h3>
+                    <p class="card-desc">Retake the quiz to get a fresh look at your current mental wellness status and
+                        updated recommendations.</p>
+                </div>
+                <div class="card-arrow">
+                    <i class="fa-solid fa-arrow-right"></i>
+                </div>
+                <div class="card-badge card-badge--new">≈ 5 min</div>
+            </a>
+
+        </div>
+
+        <!-- ── QUICK STATS ROW ── -->
+        <div class="stats-row" id="statsRow">
+            <div class="stat-chip">
+                <i class="fa-solid fa-fire-flame-curved"></i>
+                <span class="stat-val" id="statStreak">—</span>
+                <span class="stat-lbl">Day Streak</span>
+            </div>
+            <div class="stat-chip">
+                <i class="fa-solid fa-brain"></i>
+                <span class="stat-val" id="statScore">—</span>
+                <span class="stat-lbl">Wellness Score</span>
+            </div>
+            <div class="stat-chip">
+                <i class="fa-solid fa-calendar-check"></i>
+                <span class="stat-val" id="statSessions">—</span>
+                <span class="stat-lbl">Sessions</span>
+            </div>
+        </div>
+
+        <!-- ── FOOTER ── -->
+        <footer class="hub-footer">
+            <p class="crisis-note">
+                <i class="fa-solid fa-phone-volume"></i>
+                In crisis? Call <a href="tel:9152987821">iCall: 9152987821</a>
+            </p>
+            <button class="btn-logout" id="btnLogout" onclick="handleLogout()">
+                <i class="fa-solid fa-right-from-bracket"></i>
+                Sign Out
+            </button>
+        </footer>
+
+    </div><!-- /hub-wrapper -->
+
+    <script src="home.js"></script>
+</body>
+
+</html>

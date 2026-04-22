@@ -1,0 +1,707 @@
+/* ============================================
+   onboarding.css — MindCare Onboarding Quiz
+   Depends on: style.css (for :root variables,
+   body, bg-blob, btn-login, crisis-note etc.)
+   ============================================ */
+
+/* ── Screen System ─────────────────────────── */
+.ob-screen {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(24px) scale(0.98);
+    transition: opacity 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+        transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+    z-index: 1;
+}
+
+.ob-screen.active {
+    opacity: 1;
+    pointer-events: all;
+    transform: translateY(0) scale(1);
+}
+
+.ob-screen.exit-left {
+    opacity: 0;
+    transform: translateX(-60px) scale(0.97);
+}
+
+/* ── Card Base ─────────────────────────────── */
+.ob-card {
+    background: rgba(255, 255, 255, 0.93);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border-radius: 24px;
+    padding: 2.8rem 3rem;
+    width: 100%;
+    box-shadow: 0 24px 64px rgba(108, 99, 255, 0.18),
+        0 0 0 1px rgba(255, 255, 255, 0.1);
+    animation: cardIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes cardIn {
+    from {
+        opacity: 0;
+        transform: translateY(32px) scale(0.97);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* ════════════════════════════════════════════
+   SCREEN 0 — Language Selection
+═══════════════════════════════════════════ */
+.lang-card {
+    max-width: 560px;
+    text-align: center;
+}
+
+.ob-logo {
+    width: 64px;
+    height: 64px;
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+    border-radius: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    color: white;
+    margin: 0 auto 1.5rem;
+    animation: pulse 2.5s ease-in-out infinite;
+    box-shadow: 0 8px 24px rgba(108, 99, 255, 0.35);
+}
+
+.ob-title {
+    font-size: 1.9rem;
+    font-weight: 700;
+    color: var(--text-dark);
+    margin-bottom: 0.5rem;
+}
+
+.ob-title span {
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.ob-subtitle {
+    font-size: 0.95rem;
+    color: var(--text-mid);
+    line-height: 1.7;
+    margin-bottom: 2rem;
+}
+
+.hi-text {
+    font-size: 0.9rem;
+    color: var(--text-light);
+}
+
+/* Language option cards */
+.lang-options {
+    display: flex;
+    gap: 1.2rem;
+    justify-content: center;
+    margin-bottom: 1.8rem;
+}
+
+.lang-btn {
+    flex: 1;
+    max-width: 200px;
+    background: #fafaff;
+    border: 2px solid var(--border);
+    border-radius: 16px;
+    padding: 1.6rem 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.4rem;
+    cursor: pointer;
+    position: relative;
+    transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+    overflow: hidden;
+}
+
+.lang-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+    opacity: 0;
+    transition: opacity 0.25s;
+}
+
+.lang-btn:hover {
+    border-color: var(--primary);
+    transform: translateY(-4px);
+    box-shadow: 0 12px 32px rgba(108, 99, 255, 0.2);
+}
+
+.lang-btn:hover::before {
+    opacity: 0.06;
+}
+
+.lang-flag {
+    font-size: 2.8rem;
+    line-height: 1;
+    position: relative;
+    z-index: 1;
+}
+
+.lang-name {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-dark);
+    position: relative;
+    z-index: 1;
+}
+
+.lang-sub {
+    font-size: 0.75rem;
+    color: var(--text-light);
+    position: relative;
+    z-index: 1;
+}
+
+.lang-check {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+    color: white;
+    font-size: 0.65rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transform: scale(0.6);
+    transition: opacity 0.2s, transform 0.2s;
+    z-index: 1;
+}
+
+.lang-btn.selected {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 4px var(--input-focus);
+}
+
+.lang-btn.selected .lang-check {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.lang-note {
+    font-size: 0.78rem;
+    color: var(--text-light);
+    background: #f0f0ff;
+    padding: 0.6rem 1rem;
+    border-radius: 10px;
+    border-left: 3px solid var(--accent);
+    text-align: left;
+    line-height: 1.5;
+}
+
+.lang-note i {
+    color: var(--accent-dark);
+    margin-right: 0.4rem;
+}
+
+/* ════════════════════════════════════════════
+   SCREEN 1 — Quiz
+═══════════════════════════════════════════ */
+.quiz-card {
+    max-width: 620px;
+    padding: 2.2rem 2.8rem 2rem;
+}
+
+/* Top bar */
+.quiz-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+
+.quiz-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.q-badge {
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    letter-spacing: 0.3px;
+}
+
+.q-category {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--text-light);
+    background: #f0f0ff;
+    padding: 0.25rem 0.65rem;
+    border-radius: 20px;
+}
+
+.btn-lang-switch {
+    background: #f0f0ff;
+    border: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    cursor: pointer;
+    color: var(--primary);
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s, transform 0.2s;
+}
+
+.btn-lang-switch:hover {
+    background: var(--primary);
+    color: white;
+    transform: scale(1.08);
+}
+
+/* Progress bar */
+.progress-track {
+    height: 6px;
+    background: #ebebff;
+    border-radius: 6px;
+    margin-bottom: 1.8rem;
+    position: relative;
+    overflow: visible;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary), var(--accent));
+    border-radius: 6px;
+    transition: width 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.progress-glow {
+    position: absolute;
+    top: 50%;
+    width: 12px;
+    height: 12px;
+    background: var(--accent);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0 8px var(--accent);
+    transition: left 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Question area */
+.question-area {
+    text-align: center;
+    margin-bottom: 1.8rem;
+    min-height: 130px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.q-icon {
+    font-size: 3rem;
+    margin-bottom: 0.8rem;
+    animation: iconBounce 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes iconBounce {
+    from {
+        transform: scale(0.5) rotate(-10deg);
+        opacity: 0;
+    }
+
+    to {
+        transform: scale(1) rotate(0deg);
+        opacity: 1;
+    }
+}
+
+.q-text {
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: var(--text-dark);
+    line-height: 1.5;
+    animation: fadeSlideUp 0.4s ease both;
+}
+
+@keyframes fadeSlideUp {
+    from {
+        opacity: 0;
+        transform: translateY(14px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Options */
+.options-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+    margin-bottom: 1.5rem;
+}
+
+.option-btn {
+    width: 100%;
+    background: #fafaff;
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    padding: 0.8rem 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    cursor: pointer;
+    text-align: left;
+    transition: border-color 0.2s, background 0.2s, transform 0.15s, box-shadow 0.2s;
+    animation: optionIn 0.35s ease both;
+}
+
+.option-btn:nth-child(1) {
+    animation-delay: 0.05s;
+}
+
+.option-btn:nth-child(2) {
+    animation-delay: 0.10s;
+}
+
+.option-btn:nth-child(3) {
+    animation-delay: 0.15s;
+}
+
+.option-btn:nth-child(4) {
+    animation-delay: 0.20s;
+}
+
+@keyframes optionIn {
+    from {
+        opacity: 0;
+        transform: translateX(-16px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.option-btn:hover {
+    border-color: var(--primary-light);
+    background: #f3f3ff;
+    transform: translateX(4px);
+    box-shadow: 0 4px 14px rgba(108, 99, 255, 0.1);
+}
+
+.option-btn.selected {
+    border-color: var(--primary);
+    background: linear-gradient(135deg, rgba(108, 99, 255, 0.08), rgba(67, 198, 172, 0.06));
+    box-shadow: 0 0 0 3px var(--input-focus);
+}
+
+.option-letter {
+    min-width: 30px;
+    height: 30px;
+    background: var(--border);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--text-mid);
+    transition: background 0.2s, color 0.2s;
+    flex-shrink: 0;
+}
+
+.option-btn.selected .option-letter {
+    background: var(--primary);
+    color: white;
+}
+
+.option-text {
+    font-size: 0.9rem;
+    color: var(--text-mid);
+    line-height: 1.4;
+    font-weight: 400;
+}
+
+.option-btn.selected .option-text {
+    color: var(--text-dark);
+    font-weight: 500;
+}
+
+/* Nav */
+.quiz-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.btn-nav {
+    background: none;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 0.55rem 1.1rem;
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-mid);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    transition: background 0.2s, border-color 0.2s, color 0.2s;
+}
+
+.btn-prev:hover {
+    background: #f0f0ff;
+    border-color: var(--primary-light);
+    color: var(--primary);
+}
+
+.btn-skip {
+    color: var(--text-light);
+    border-color: transparent;
+}
+
+.btn-skip:hover {
+    background: #fff0f5;
+    border-color: #ffd0e0;
+    color: #d06080;
+}
+
+/* ════════════════════════════════════════════
+   SCREEN 2 — Results
+═══════════════════════════════════════════ */
+.result-card {
+    max-width: 560px;
+    text-align: center;
+}
+
+.result-header {
+    margin-bottom: 1.5rem;
+}
+
+.result-emoji {
+    font-size: 3.5rem;
+    animation: resultPop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+    display: block;
+    margin-bottom: 0.6rem;
+}
+
+@keyframes resultPop {
+    from {
+        transform: scale(0) rotate(-20deg);
+        opacity: 0;
+    }
+
+    to {
+        transform: scale(1) rotate(0);
+        opacity: 1;
+    }
+}
+
+.result-level {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--text-dark);
+    margin-bottom: 0.4rem;
+}
+
+.result-msg {
+    font-size: 0.9rem;
+    color: var(--text-mid);
+    line-height: 1.6;
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+/* SVG score ring */
+.score-ring-wrap {
+    position: relative;
+    width: 140px;
+    height: 140px;
+    margin: 1.5rem auto;
+}
+
+.score-ring {
+    width: 140px;
+    height: 140px;
+    transform: rotate(-90deg);
+}
+
+.ring-bg {
+    fill: none;
+    stroke: #ebebff;
+    stroke-width: 10;
+}
+
+.ring-fill {
+    fill: none;
+    stroke: url(#ringGrad);
+    stroke-width: 10;
+    stroke-linecap: round;
+    stroke-dasharray: 314;
+    stroke-dashoffset: 314;
+    transition: stroke-dashoffset 1.2s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.score-center {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+}
+
+.score-num {
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: var(--text-dark);
+    line-height: 1;
+}
+
+.score-den {
+    font-size: 0.8rem;
+    color: var(--text-light);
+    font-weight: 400;
+}
+
+/* Category tags */
+.result-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    justify-content: center;
+    margin: 1rem 0;
+}
+
+.r-tag {
+    background: #f0f0ff;
+    border-radius: 20px;
+    padding: 0.3rem 0.9rem;
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: var(--text-mid);
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.r-tag.good {
+    background: #e8fff8;
+    color: #2ea88d;
+}
+
+.r-tag.mid {
+    background: #fff8e0;
+    color: #c07800;
+}
+
+.r-tag.low {
+    background: #fff0f5;
+    color: #c04060;
+}
+
+/* Tip box */
+.result-tip {
+    background: linear-gradient(135deg, rgba(108, 99, 255, 0.06), rgba(67, 198, 172, 0.06));
+    border-left: 3px solid var(--primary);
+    border-radius: 10px;
+    padding: 0.8rem 1.1rem;
+    font-size: 0.83rem;
+    color: var(--text-mid);
+    line-height: 1.6;
+    text-align: left;
+    margin-bottom: 1.2rem;
+}
+
+/* CTA buttons */
+.result-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.btn-dashboard {
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+}
+
+.btn-retake {
+    background: none;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 0.7rem 1rem;
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: var(--text-mid);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: background 0.2s, border-color 0.2s;
+}
+
+.btn-retake:hover {
+    background: #f0f0ff;
+    border-color: var(--primary-light);
+    color: var(--primary);
+}
+
+/* ── Responsive ────────────────────────────── */
+@media (max-width: 600px) {
+    .ob-card {
+        padding: 2rem 1.6rem;
+    }
+
+    .lang-options {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .lang-btn {
+        width: 100%;
+        max-width: 100%;
+        flex-direction: row;
+        padding: 1rem 1.2rem;
+        justify-content: flex-start;
+        gap: 1rem;
+    }
+
+    .lang-flag {
+        font-size: 2rem;
+    }
+
+    .q-text {
+        font-size: 1rem;
+    }
+
+    .quiz-card {
+        padding: 1.8rem 1.4rem;
+    }
+}
