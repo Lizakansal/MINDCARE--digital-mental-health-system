@@ -1,7 +1,3 @@
-/* ============================================
-   MindCare — Welcome Hub Logic (home.js)
-   ============================================ */
-
 // ── Affirmations List ──────────────────────────
 const affirmations = [
     "You are stronger than you think. One step at a time.",
@@ -54,19 +50,19 @@ function loadUserName() {
 
 // ── Load Stats (from localStorage after quiz) ──
 function loadStats() {
-    const score   = localStorage.getItem('mindcare_quiz_score');
-    const streak  = localStorage.getItem('mindcare_streak') || '0';
+    const score = localStorage.getItem('mindcare_quiz_score');
+    const streak = localStorage.getItem('mindcare_streak') || '0';
     const sessions = localStorage.getItem('mindcare_sessions') || '0';
 
-    document.getElementById('statScore').textContent   = score   ? `${score}/40` : '—';
-    document.getElementById('statStreak').textContent  = streak  ? `${streak}🔥`  : '—';
-    document.getElementById('statSessions').textContent = sessions ? sessions      : '—';
+    document.getElementById('statScore').textContent = score ? `${score}/40` : '—';
+    document.getElementById('statStreak').textContent = streak ? `${streak}🔥` : '—';
+    document.getElementById('statSessions').textContent = sessions ? sessions : '—';
 }
 
 // ── Mood Tracker ──────────────────────────────
 function initMoodTracker() {
     const moodBtns = document.querySelectorAll('.mood-btn');
-    const today    = new Date().toDateString();
+    const today = new Date().toDateString();
     const savedMood = localStorage.getItem('mindcare_mood_' + today);
 
     moodBtns.forEach(btn => {
