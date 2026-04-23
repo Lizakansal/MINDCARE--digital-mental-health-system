@@ -5,7 +5,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function loadDashboardData() {
     // Read stats from localStorage (matching what we set in home.js or onboarding.js)
-    const score = localStorage.getItem('mindcare_quiz_score') || '0';
+    let score = '0';
+    try {
+        const quizData = JSON.parse(localStorage.getItem('mindcare_quiz'));
+        if (quizData && quizData.score !== undefined) {
+            score = quizData.score;
+        }
+    } catch (e) { }
+
     const sessions = localStorage.getItem('mindcare_sessions') || '1';
 
     // Update DOM
@@ -33,9 +40,24 @@ function loadDashboardData() {
 function initMoodChart() {
     const ctx = document.getElementById('moodChart').getContext('2d');
 
-    // Mock Data for the last 7 days.
-    const labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    const moodData = [3, 4, 3, 5, 4, 2, 4]; // 1: Rough, 2: Low, 3: Okay, 4: Good, 5: Great
+    // Fetch mood history from local storage
+    let history = [];
+    try {
+        history = JSON.parse(localStorage.getItem('mindcare_moodHistory')) || [];
+    } catch (e) { }
+
+    if (history.length === 0) {
+        history = [
+            { session: 'Check-in 1', val: 3 },
+            { session: 'Check-in 2', val: 3 },
+            { session: 'Check-in 3', val: 4 }
+        ];
+    }
+
+    // Use last 10 elements to prevent overcrowding 
+    const recentHistory = history.slice(-10);
+    const labels = recentHistory.map(h => h.session);
+    const moodData = recentHistory.map(h => h.val);
 
     // Create a gradient for the line graph
     let gradient = ctx.createLinearGradient(0, 0, 0, 400);

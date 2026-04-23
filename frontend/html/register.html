@@ -12,8 +12,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="register.css">
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/register.css">
 </head>
 
 <body>
@@ -21,7 +21,7 @@
     <div class="bg-blob blob-1"></div>
     <div class="bg-blob blob-2"></div>
 
-    <div class="card-wrapper reg-card-wrapper">7
+    <div class="card-wrapper reg-card-wrapper">
         <!-- Left brand panel -->
         <div class="brand-panel">
             <div class="brand-logo">
@@ -118,10 +118,12 @@
                     <span class="error-msg" id="termsError"></span>
                 </div>
                 <!-- Submit button -->
-                <button type="submit" class="btn-login btn-register" id="registerBtn">
-                    <span class="btn-text">Create Account</span>
-                    <i class="fa-solid fa-user-plus btn-icon"></i>
-                </button>
+                <a href="onboarding.html">
+                    <button type="submit" class="btn-login btn-register" id="registerBtn">
+                        <span class="btn-text">Create Account</span>
+                        <i class="fa-solid fa-user-plus btn-icon"></i>
+                    </button>
+                </a>
                 <!-- Divider -->
                 <div class="divider">
                     <span>or</span>
@@ -138,7 +140,7 @@
             </form>
         </div>
     </div>
-    <script src="register.js"></script>
+    <script src="../js/register.js"></script>
 </body>
 
 </html>

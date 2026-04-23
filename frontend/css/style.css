@@ -40,11 +40,12 @@ body {
         url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e') no-repeat center/cover;
     min-height: 100vh;
     display: flex;
+    flex-direction: column;
     justify-content: center;
-    align-items: center;
-    padding: 1rem;
+    padding: 2rem 1rem;
     position: relative;
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
 }
 
 /* ---------- Decorative background blobs ---------- */
@@ -93,6 +94,7 @@ body {
     display: flex;
     width: 100%;
     max-width: 880px;
+    margin: auto;
     border-radius: var(--radius);
     overflow: hidden;
     box-shadow: var(--shadow), 0 0 0 1px rgba(255, 255, 255, 0.08);

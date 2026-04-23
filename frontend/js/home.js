@@ -50,13 +50,21 @@ function loadUserName() {
 
 // ── Load Stats (from localStorage after quiz) ──
 function loadStats() {
-    const score = localStorage.getItem('mindcare_quiz_score');
-    const streak = localStorage.getItem('mindcare_streak') || '0';
+    let score = null;
+    try {
+        const quizData = JSON.parse(localStorage.getItem('mindcare_quiz'));
+        if (quizData && quizData.score !== undefined) {
+            score = quizData.score;
+        }
+    } catch (e) { }
     const sessions = localStorage.getItem('mindcare_sessions') || '0';
 
-    document.getElementById('statScore').textContent = score ? `${score}/40` : '—';
-    document.getElementById('statStreak').textContent = streak ? `${streak}🔥` : '—';
-    document.getElementById('statSessions').textContent = sessions ? sessions : '—';
+    const statScoreEl = document.getElementById('statScore');
+    if (statScoreEl) statScoreEl.textContent = score ? `${score}/40` : '—';
+
+    // Streaks have been removed.
+    const statSessionsEl = document.getElementById('statSessions');
+    if (statSessionsEl) statSessionsEl.textContent = sessions ? sessions : '—';
 }
 
 // ── Mood Tracker ──────────────────────────────
@@ -74,11 +82,25 @@ function initMoodTracker() {
             localStorage.setItem('mindcare_mood_' + today, btn.dataset.mood);
             showToast(`Mood logged: ${btn.textContent} — Thank you for checking in!`);
 
+            // Push to mood history for the chart
+            let moodVal = 3;
+            if (btn.dataset.mood === 'rough') moodVal = 1;
+            if (btn.dataset.mood === 'low') moodVal = 2;
+            if (btn.dataset.mood === 'okay') moodVal = 3;
+            if (btn.dataset.mood === 'good') moodVal = 4;
+            if (btn.dataset.mood === 'great') moodVal = 5;
+
+            let history = [];
+            try { history = JSON.parse(localStorage.getItem('mindcare_moodHistory')) || []; } catch (e) { }
+            history.push({ session: 'Check-in ' + (history.length + 1), val: moodVal });
+            localStorage.setItem('mindcare_moodHistory', JSON.stringify(history));
+
             // Update sessions count
             let sessions = parseInt(localStorage.getItem('mindcare_sessions') || '0');
             sessions++;
             localStorage.setItem('mindcare_sessions', sessions);
-            document.getElementById('statSessions').textContent = sessions;
+            const sessionEl = document.getElementById('statSessions');
+            if (sessionEl) sessionEl.textContent = sessions;
         });
     });
 }
