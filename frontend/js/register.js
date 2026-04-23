@@ -181,16 +181,44 @@ registerForm.addEventListener('submit', (e) => {
     registerBtn.querySelector('.btn-text').textContent = 'Creating account…';
     registerBtn.querySelector('.btn-icon').className = 'fa-solid fa-spinner fa-spin btn-icon';
 
-    // TODO: Replace with real API call
-    setTimeout(() => {
-        registerBtn.querySelector('.btn-text').textContent = 'Account Created!';
-        registerBtn.querySelector('.btn-icon').className = 'fa-solid fa-check btn-icon';
-        registerBtn.style.background = 'linear-gradient(135deg, #43C6AC, #2ea88d)';
+    // ---- Real API call ----
+    const formData = {
+        fullname: document.getElementById('fullname').value.trim(),
+        email: document.getElementById('email').value.trim(),
+        phone: document.getElementById('phone').value.trim(),
+        password: document.getElementById('password').value
+    };
 
-        setTimeout(() => {
-            // Clear any saved language so onboarding always starts fresh for new users
-            localStorage.removeItem('mindcare_lang');
-            window.location.href = 'onboarding.html';
-        }, 1200);
-    }, 1800);
+    fetch('/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+    })
+    .then(async response => {
+        const data = await response.json();
+        if (response.ok) {
+            registerBtn.querySelector('.btn-text').textContent = 'Account Created!';
+            registerBtn.querySelector('.btn-icon').className = 'fa-solid fa-check btn-icon';
+            registerBtn.style.background = 'linear-gradient(135deg, #43C6AC, #2ea88d)';
+
+            setTimeout(() => {
+                // Store user info for onboarding
+                localStorage.setItem('mindcare_user', JSON.stringify({ email: formData.email, name: formData.fullname }));
+                localStorage.removeItem('mindcare_lang');
+                window.location.href = data.redirect || 'onboarding.html';
+            }, 1200);
+        } else {
+            setError('emailGroup', 'emailError', data.error || 'Registration failed. Try again.');
+            registerBtn.disabled = false;
+            registerBtn.querySelector('.btn-text').textContent = 'Create Account';
+            registerBtn.querySelector('.btn-icon').className = 'fa-solid fa-user-plus btn-icon';
+        }
+    })
+    .catch(err => {
+        console.error('Registration error:', err);
+        setError('emailGroup', 'emailError', 'Network error. Is the server running?');
+        registerBtn.disabled = false;
+        registerBtn.querySelector('.btn-text').textContent = 'Create Account';
+        registerBtn.querySelector('.btn-icon').className = 'fa-solid fa-user-plus btn-icon';
+    });
 });

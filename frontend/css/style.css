@@ -1,10 +1,5 @@
-/* ============================================
-   Mental Health Support System — Login Page
-   ============================================ */
-
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
 
-/* ---------- Reset & Base ---------- */
 *,
 *::before,
 *::after {
@@ -113,7 +108,7 @@ body {
     }
 }
 
-/* ---------- Brand Panel (left) ---------- */
+/* ---------- Panel (left) ---------- */
 .brand-panel {
     flex: 1;
     background: linear-gradient(160deg, #6C63FF 0%, #43C6AC 100%);

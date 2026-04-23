@@ -105,9 +105,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (response.ok) {
                 btnText.textContent = 'Success! Redirecting…';
-                // Save token if returned
-                if (data.token) localStorage.setItem('token', data.token);
-                setTimeout(() => { window.location.href = data.redirect || '/dashboard'; }, 800);
+                // Save user info
+                if (data.user) {
+                    localStorage.setItem('mindcare_user', JSON.stringify(data.user));
+                }
+                setTimeout(() => { window.location.href = data.redirect || 'dashboard.html'; }, 800);
             } else {
                 setError('passwordGroup', data.message || 'Invalid credentials. Please try again.');
                 btn.disabled = false;

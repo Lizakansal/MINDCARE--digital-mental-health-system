@@ -420,14 +420,31 @@ function showResults() {
         }, 40);
     }, 400);
 
-    // Save to localStorage for dashboard
-    localStorage.setItem('mindcare_quiz', JSON.stringify({
+    // Save to localStorage for dashboard fallback
+    const quizResult = {
         score: totalScore,
         level: level.level.en,
         answers: answers,
         lang: lang,
         timestamp: new Date().toISOString()
-    }));
+    };
+    localStorage.setItem('mindcare_quiz', JSON.stringify(quizResult));
+
+    // ---- Send to Backend ----
+    const user = JSON.parse(localStorage.getItem('mindcare_user'));
+    if (user && user.email) {
+        fetch('/submit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                ...quizResult,
+                email: user.email
+            })
+        })
+        .then(res => res.json())
+        .then(data => console.log('Quiz saved to server:', data))
+        .catch(err => console.error('Error saving quiz:', err));
+    }
 }
 
 function injectRingGradient(color) {
