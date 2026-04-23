@@ -1,144 +1,51 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description"
-        content="Create your MindCare account — join a safe space for mental wellness and support.">
-    <title>Register — Mental Health Support System</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
-        rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <title>Resources</title>
+
+    <!-- CSS (same folder) -->
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="register.css">
+    <link rel="stylesheet" href="resources.css">
 </head>
 
 <body>
-    <!-- Decorative background blobs -->
-    <div class="bg-blob blob-1"></div>
-    <div class="bg-blob blob-2"></div>
 
-    <div class="card-wrapper reg-card-wrapper">7
-        <!-- Left brand panel -->
-        <div class="brand-panel">
-            <div class="brand-logo">
-                <i class="fa-solid fa-heart-pulse"></i>
-            </div>
-            <h1 class="brand-title">MindCare</h1>
-            <p class="brand-subtitle">Begin your journey to better mental health today</p>
-            <ul class="brand-features">
-                <li><i class="fa-solid fa-check-circle"></i> Free &amp; Easy Sign Up</li>
-                <li><i class="fa-solid fa-check-circle"></i> 100% Confidential</li>
-                <li><i class="fa-solid fa-check-circle"></i> Access Expert Resources</li>
-                <li><i class="fa-solid fa-check-circle"></i> 24/7 Community Support</li>
-            </ul>
-        </div>
-        <!-- Right register form panel -->
-        <div class="form-panel">
-            <div class="form-header">
-                <h2>Create Account</h2>
-                <p>Join MindCare — your wellness journey starts here</p>
-            </div>
-            <form id="registerForm" action="/register" method="POST" novalidate>
-                <!-- Full Name -->
-                <div class="input-group" id="nameGroup">
-                    <label for="fullname">Full Name</label>
-                    <div class="input-wrapper">
-                        <i class="fa-solid fa-user input-icon"></i>
-                        <input type="text" id="fullname" name="fullname" placeholder="Enter your full name"
-                            autocomplete="name" required>
-                    </div>
-                    <span class="error-msg" id="nameError"></span>
-                </div>
-                <!-- Email -->
-                <div class="input-group" id="emailGroup">
-                    <label for="email">Email Address</label>
-                    <div class="input-wrapper">
-                        <i class="fa-solid fa-envelope input-icon"></i>
-                        <input type="email" id="email" name="email" placeholder="Enter your email address"
-                            autocomplete="email" required>
-                    </div>
-                    <span class="error-msg" id="emailError"></span>
-                </div>
-                <!-- Phone Number -->
-                <div class="input-group" id="phoneGroup">
-                    <label for="phone">Phone Number</label>
-                    <div class="input-wrapper">
-                        <i class="fa-solid fa-phone input-icon"></i>
-                        <input type="tel" id="phone" name="phone" placeholder="Enter your phone number"
-                            autocomplete="tel">
-                    </div>
-                    <span class="error-msg" id="phoneError"></span>
-                </div>
-                <!-- Password -->
-                <div class="input-group" id="passwordGroup">
-                    <label for="password">Password</label>
-                    <div class="input-wrapper">
-                        <i class="fa-solid fa-lock input-icon"></i>
-                        <input type="password" id="password" name="password" placeholder="Create a strong password"
-                            autocomplete="new-password" required>
-                        <button type="button" class="toggle-password" id="togglePassword"
-                            aria-label="Toggle password visibility">
-                            <i class="fa-solid fa-eye" id="eyeIcon"></i>
-                        </button>
-                    </div>
-                    <!-- Password strength bar -->
-                    <div class="strength-bar-wrapper" id="strengthWrapper">
-                        <div class="strength-bar" id="strengthBar"></div>
-                    </div>
-                    <span class="strength-text" id="strengthText"></span>
-                    <span class="error-msg" id="passwordError"></span>
-                </div>
-                <!-- Confirm Password -->
-                <div class="input-group" id="confirmGroup">
-                    <label for="confirmPassword">Confirm Password</label>
-                    <div class="input-wrapper">
-                        <i class="fa-solid fa-shield-halved input-icon"></i>
-                        <input type="password" id="confirmPassword" name="confirmPassword"
-                            placeholder="Re-enter your password" autocomplete="new-password" required>
-                        <button type="button" class="toggle-password" id="toggleConfirm"
-                            aria-label="Toggle confirm password visibility">
-                            <i class="fa-solid fa-eye" id="eyeIconConfirm"></i>
-                        </button>
-                    </div>
-                    <span class="error-msg" id="confirmError"></span>
-                </div>
+<div class="resources-container">
 
-                <!-- Terms & Conditions -->
-                <div class="terms-row">
-                    <label class="remember-label" id="termsLabel">
-                        <input type="checkbox" id="agreeTerms" name="agreeTerms" required>
-                        <span class="checkbox-custom"></span>
-                        I agree to the <a href="#" class="terms-link">Terms of Service</a> &amp; <a href="#"
-                            class="terms-link">Privacy Policy</a>
-                    </label>
-                    <span class="error-msg" id="termsError"></span>
-                </div>
-                <!-- Submit button -->
-                <button type="submit" class="btn-login btn-register" id="registerBtn">
-                    <span class="btn-text">Create Account</span>
-                    <i class="fa-solid fa-user-plus btn-icon"></i>
-                </button>
-                <!-- Divider -->
-                <div class="divider">
-                    <span>or</span>
-                </div>
-                <!-- Login link -->
-                <p class="register-link">
-                    Already have an account? <a href="login.html">Sign in here</a>
-                </p>
-                <!-- Crisis help note -->
-                <p class="crisis-note">
-                    <i class="fa-solid fa-phone-volume"></i>
-                    In crisis? Call <a href="tel:9152987821">iCall: 9152987821</a>
-                </p>
-            </form>
-        </div>
+    <!-- Filters -->
+    <div class="filters-section">
+        <select id="type-filter">
+            <option value="all">All</option>
+            <option value="videos">Videos</option>
+            <option value="audio">Audio</option>
+            <option value="posters">Posters</option>
+            <option value="guides">Guides</option>
+            <option value="books">Books</option>
+            <option value="quotes">Quotes</option>
+        </select>
+
+        <input type="text" id="search-filter" placeholder="Search...">
+        <button id="clear-filters">Clear</button>
     </div>
-    <script src="register.js"></script>
-</body>
 
+    <!-- Grid -->
+    <div id="resources-grid" class="resources-grid"></div>
+
+    <div id="loading-indicator">Loading...</div>
+    <div id="no-results" style="display:none;">No results found</div>
+
+</div>
+
+<!-- FULL SCREEN MODAL -->
+<div class="resource-modal" id="resource-modal">
+    <div class="modal-overlay" id="modal-overlay"></div>
+    <div class="modal-content" id="modal-content"></div>
+</div>
+
+<!-- JS -->
+<script src="resources.js"></script>
+
+</body>
 </html>
