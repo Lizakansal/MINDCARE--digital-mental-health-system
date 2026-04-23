@@ -9,19 +9,10 @@
 //  5. Emotion Indicator — header mein mood dikhata hai
 //  6. Human-like System Prompt — bilkul natural responses
 //
-//  SETUP: Line 11 pe apni Gemini API key daalo
-//  Key: aistudio.google.com → Get API Key
-// ============================================================
-
 // API Key is now safely stored in the backend (app.py)
 // Hit our local Flask backend instead of Google directly
 const API_URL = "http://127.0.0.1:5000/api/chat";
 
-// ============================================================
-//  UPGRADE 1 — HUMAN-LIKE SYSTEM PROMPT
-//  Yahi cheez ChatGPT jaisi responses deti hai
-//  Generic nahi, context-aware, emotionally intelligent
-// ============================================================
 const SYSTEM_PROMPT = `You are Mia, MindCare's AI mental wellness companion. You are NOT a typical chatbot — you are warm, deeply human, and genuinely caring.
 
 ## Your Personality:

@@ -19,7 +19,7 @@ document.addEventListener("DOMContentLoaded", () => {
     /* ===============================
        LOAD JSON
     =============================== */
-    fetch("resource/resources.json")
+    fetch("../resource/resources.json")
         .then(res => res.json())
         .then(data => {
 
@@ -69,13 +69,13 @@ document.addEventListener("DOMContentLoaded", () => {
         let media = "";
 
         if (resource.type === "videos") {
-            media = `<video src="resource/${resource.file}" muted></video>`;
+            media = `<video src="../resource/${resource.file}" muted></video>`;
         } else if (resource.type === "audio") {
-            media = `<img src="resource/${resource.thumbnail}" />`;
+            media = `<img src="../resource/${resource.thumbnail}" />`;
         } else if (resource.type === "posters") {
-            media = `<img src="resource/${resource.file}" />`;
+            media = `<img src="../resource/${resource.file}" />`;
         } else if (resource.type === "guides" || resource.type === "books") {
-            media = `<iframe src="resource/${resource.file}"></iframe>`;
+            media = `<iframe src="../resource/${resource.file}"></iframe>`;
         } else if (resource.type === "quotes") {
             media = `<div style="height:180px;background:linear-gradient(135deg,#ff416c,#ff4b2b);"></div>`;
         }
@@ -88,8 +88,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 <div class="tags">
                     ${resource.tags
-                        ? resource.tags.map(tag => `<span class="tag ${tag}">${tag}</span>`).join("")
-                        : ""}
+                ? resource.tags.map(tag => `<span class="tag ${tag}">${tag}</span>`).join("")
+                : ""}
                 </div>
             </div>
         `;
@@ -147,17 +147,17 @@ document.addEventListener("DOMContentLoaded", () => {
         `;
 
         if (resource.type === "videos") {
-            content += `<video controls autoplay src="resource/${resource.file}"></video>`;
-        } 
+            content += `<video controls autoplay src="../resource/${resource.file}"></video>`;
+        }
         else if (resource.type === "audio") {
-            content += `<audio controls autoplay src="resource/${resource.file}"></audio>`;
-        } 
+            content += `<audio controls autoplay src="../resource/${resource.file}"></audio>`;
+        }
         else if (resource.type === "posters") {
-            content += `<img src="resource/${resource.file}" />`;
-        } 
+            content += `<img src="../resource/${resource.file}" />`;
+        }
         else if (resource.type === "guides" || resource.type === "books") {
-            content += `<iframe src="resource/${resource.file}"></iframe>`;
-        } 
+            content += `<iframe src="../resource/${resource.file}"></iframe>`;
+        }
         else if (resource.type === "quotes") {
             content += `
                 <div class="quote-modal">
