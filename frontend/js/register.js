@@ -177,6 +177,7 @@ registerForm.addEventListener('submit', (e) => {
     const formData = {
         name: document.getElementById('fullname').value.trim(),
         email: document.getElementById('email').value.trim(),
+        phone: document.getElementById('phone').value.trim(),
         password: document.getElementById('password').value
     };
 

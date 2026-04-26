@@ -260,6 +260,7 @@ from flask_cors import CORS
 from pymongo import MongoClient
 from datetime import datetime, timedelta
 from functools import wraps
+import random
 from bson import ObjectId
 import bcrypt
 import jwt
@@ -281,6 +282,7 @@ db      = client["mindcare"]
 users   = db["users"]
 moods   = db["moods"]
 quizzes = db["quizzes"]
+password_reset_otps = {}
 
 def make_token(user_id):
     payload = {"sub": user_id, "exp": datetime.utcnow() + timedelta(days=7)}
@@ -319,6 +321,7 @@ def register():
     data     = request.get_json(silent=True) or {}
     name     = (data.get("name") or "").strip()
     email    = (data.get("email") or "").strip().lower()
+    phone    = (data.get("phone") or "").strip()
     password = data.get("password") or ""
     if not name or not email or not password:
         return jsonify({"error": "All fields are required"}), 400
@@ -330,43 +333,109 @@ def register():
         return jsonify({"error": "Email already registered"}), 409
     hashed = bcrypt.hashpw(password.encode(), bcrypt.gensalt())
     result = users.insert_one({
-        "name": name, "email": email, "password": hashed,
+        "name": name, "email": email, "phone": phone, "password": hashed,
         "created_at": datetime.utcnow(), "streak": 0, "last_mood_date": None
     })
     return jsonify({"token": make_token(str(result.inserted_id)), "name": name}), 201
 
+def normalize_phone(phone):
+    return re.sub(r"\D", "", phone or "")
+
+def build_otp_lookup(email, phone):
+    lookup = {}
+    if email:
+        lookup["email"] = email.strip().lower()
+    normalized_phone = normalize_phone(phone)
+    if normalized_phone:
+        lookup["phone"] = normalized_phone
+    return lookup
+
+def find_user_by_identifier(email, phone):
+    lookup = build_otp_lookup(email, phone)
+    if not lookup:
+        return None
+    return users.find_one(lookup)
+
 @app.route("/api/login", methods=["POST"])
 def login():
-    data     = request.get_json(silent=True) or {}
-    email    = (data.get("email") or "").strip().lower()
+    data = request.get_json(silent=True) or {}
+    email = (data.get("email") or "").strip().lower()
     password = data.get("password") or ""
-    user     = users.find_one({"email": email})
+    user = users.find_one({"email": email})
     if not user or not bcrypt.checkpw(password.encode(), user["password"]):
         return jsonify({"error": "Invalid email or password"}), 401
     return jsonify({"token": make_token(str(user["_id"])), "name": user["name"]}), 200
 
-@app.route("/api/forgot-password", methods=["POST"])
-def forgot_password():
+@app.route("/api/forgot-password/request-otp", methods=["POST"])
+def request_password_reset_otp():
     data = request.get_json(silent=True) or {}
     email = (data.get("email") or "").strip().lower()
+    phone = normalize_phone(data.get("phone") or "")
+    method = (data.get("method") or "").strip().lower()
+
+    if method not in ["email", "phone"]:
+        return jsonify({"error": "Method must be email or phone"}), 400
+    if method == "email" and not email:
+        return jsonify({"error": "Email is required"}), 400
+    if method == "phone" and not phone:
+        return jsonify({"error": "Phone number is required"}), 400
+    if method == "email" and not re.match(r"[^@]+@[^@]+\.[^@]+", email):
+        return jsonify({"error": "Invalid email address"}), 400
+
+    user = find_user_by_identifier(email, phone)
+    if not user:
+        return jsonify({"error": "No account found with provided details"}), 404
+
+    otp_code = str(random.randint(100000, 999999))
+    identifier_key = email if method == "email" else phone
+    password_reset_otps[identifier_key] = {
+        "otp": otp_code,
+        "user_id": str(user["_id"]),
+        "expires_at": datetime.utcnow() + timedelta(minutes=10)
+    }
+
+    # In production integrate SMS/Email provider. For local dev, return OTP in response.
+    return jsonify({
+        "message": f"OTP sent on your {method}",
+        "otp": otp_code
+    }), 200
+
+@app.route("/api/forgot-password/verify-otp", methods=["POST"])
+def verify_password_reset_otp():
+    data = request.get_json(silent=True) or {}
+    email = (data.get("email") or "").strip().lower()
+    phone = normalize_phone(data.get("phone") or "")
+    method = (data.get("method") or "").strip().lower()
+    otp = (data.get("otp") or "").strip()
     new_password = data.get("newPassword") or ""
 
-    if not email or not new_password:
-        return jsonify({"error": "Email and new password are required"}), 400
-    if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
-        return jsonify({"error": "Invalid email address"}), 400
+    if method not in ["email", "phone"]:
+        return jsonify({"error": "Method must be email or phone"}), 400
+    if method == "email" and not email:
+        return jsonify({"error": "Email is required"}), 400
+    if method == "phone" and not phone:
+        return jsonify({"error": "Phone number is required"}), 400
+    if not otp:
+        return jsonify({"error": "OTP is required"}), 400
     if len(new_password) < 6:
         return jsonify({"error": "Password must be at least 6 characters"}), 400
 
-    user = users.find_one({"email": email})
-    if not user:
-        return jsonify({"error": "No account found for this email"}), 404
+    identifier_key = email if method == "email" else phone
+    otp_record = password_reset_otps.get(identifier_key)
+    if not otp_record:
+        return jsonify({"error": "OTP not requested or expired"}), 400
+    if datetime.utcnow() > otp_record["expires_at"]:
+        password_reset_otps.pop(identifier_key, None)
+        return jsonify({"error": "OTP expired, request a new one"}), 400
+    if otp_record["otp"] != otp:
+        return jsonify({"error": "Invalid OTP"}), 400
 
     hashed = bcrypt.hashpw(new_password.encode(), bcrypt.gensalt())
     users.update_one(
-        {"_id": user["_id"]},
+        {"_id": ObjectId(otp_record["user_id"])},
         {"$set": {"password": hashed, "password_updated_at": datetime.utcnow()}}
     )
+    password_reset_otps.pop(identifier_key, None)
     return jsonify({"message": "Password reset successful"}), 200
 
 @app.route("/api/me", methods=["GET"])
