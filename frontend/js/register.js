@@ -2,6 +2,7 @@
    register.js — Form validation & interactivity
    Mental Health Support System
    ============================================ */
+const API_BASE_URL = 'http://127.0.0.1:5000';
 
 // ── Password show/hide toggle ──────────────────
 function setupToggle(btnId, inputId, iconId) {
@@ -95,7 +96,6 @@ document.getElementById('email').addEventListener('blur', validateEmail);
 document.getElementById('phone').addEventListener('blur', validatePhone);
 document.getElementById('password').addEventListener('blur', validatePassword);
 document.getElementById('confirmPassword').addEventListener('blur', validateConfirm);
-document.getElementById('role').addEventListener('change', validateRole);
 
 function validateName() {
     const val = document.getElementById('fullname').value.trim();
@@ -140,13 +140,6 @@ function validateConfirm() {
     return true;
 }
 
-function validateRole() {
-    const val = document.getElementById('role').value;
-    if (!val) return setError('roleGroup', 'roleError', 'Please select your role.');
-    setSuccess('roleGroup', 'roleError');
-    return true;
-}
-
 function validateTerms() {
     const checked = document.getElementById('agreeTerms').checked;
     if (!checked) {
@@ -170,7 +163,6 @@ registerForm.addEventListener('submit', (e) => {
         validatePhone(),
         validatePassword(),
         validateConfirm(),
-        validateRole(),
         validateTerms()
     ].every(Boolean);
 
@@ -183,13 +175,12 @@ registerForm.addEventListener('submit', (e) => {
 
     // ---- Real API call ----
     const formData = {
-        fullname: document.getElementById('fullname').value.trim(),
+        name: document.getElementById('fullname').value.trim(),
         email: document.getElementById('email').value.trim(),
-        phone: document.getElementById('phone').value.trim(),
         password: document.getElementById('password').value
     };
 
-    fetch('/register', {
+    fetch(`${API_BASE_URL}/api/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
@@ -202,10 +193,13 @@ registerForm.addEventListener('submit', (e) => {
             registerBtn.style.background = 'linear-gradient(135deg, #43C6AC, #2ea88d)';
 
             setTimeout(() => {
-                // Store user info for onboarding
-                localStorage.setItem('mindcare_user', JSON.stringify({ email: formData.email, name: formData.fullname }));
+                if (data.token) {
+                    localStorage.setItem('mindcare_token', data.token);
+                }
+                localStorage.setItem('mindcare_user_name', formData.name);
+                localStorage.setItem('mindcare_user', JSON.stringify({ email: formData.email, name: formData.name }));
                 localStorage.removeItem('mindcare_lang');
-                window.location.href = data.redirect || 'onboarding.html';
+                window.location.href = 'onboarding.html';
             }, 1200);
         } else {
             setError('emailGroup', 'emailError', data.error || 'Registration failed. Try again.');

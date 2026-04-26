@@ -1,4 +1,5 @@
 // ── Affirmations List ──────────────────────────
+const API_BASE_URL = 'http://127.0.0.1:5000';
 const affirmations = [
     "You are stronger than you think. One step at a time.",
     "It's okay to not be okay. Healing is not linear.",
@@ -42,7 +43,8 @@ function setGreeting() {
 
 // ── Load User Name (from localStorage after login) ──
 function loadUserName() {
-    const name = localStorage.getItem('mindcare_user_name');
+    const storedUser = JSON.parse(localStorage.getItem('mindcare_user') || 'null');
+    const name = storedUser?.name || localStorage.getItem('mindcare_user_name');
     if (name) {
         document.getElementById('userName').textContent = name.split(' ')[0]; // First name only
     }
@@ -101,6 +103,21 @@ function initMoodTracker() {
             localStorage.setItem('mindcare_sessions', sessions);
             const sessionEl = document.getElementById('statSessions');
             if (sessionEl) sessionEl.textContent = sessions;
+
+            const token = localStorage.getItem('mindcare_token');
+            if (token) {
+                fetch(`${API_BASE_URL}/api/mood`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        score: moodVal,
+                        note: `Quick check-in: ${btn.dataset.mood}`
+                    })
+                }).catch(err => console.error('Mood sync failed:', err));
+            }
         });
     });
 }

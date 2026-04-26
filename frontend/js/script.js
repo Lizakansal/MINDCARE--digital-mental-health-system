@@ -1,6 +1,7 @@
 // ============================================================
 //  Mental Health Support System — Login Page Script
 // ============================================================
+const API_BASE_URL = 'http://127.0.0.1:5000';
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -92,11 +93,11 @@ document.addEventListener('DOMContentLoaded', () => {
         btnText.textContent = 'Signing in…';
 
         try {
-            const response = await fetch(form.action, {
+            const response = await fetch(`${API_BASE_URL}/api/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    username: usernameEl.value.trim(),
+                    email: usernameEl.value.trim(),
                     password: passwordEl.value,
                 }),
             });
@@ -105,13 +106,33 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (response.ok) {
                 btnText.textContent = 'Success! Redirecting…';
-                // Save user info
-                if (data.user) {
-                    localStorage.setItem('mindcare_user', JSON.stringify(data.user));
+                if (data.token) localStorage.setItem('mindcare_token', data.token);
+                if (data.name) localStorage.setItem('mindcare_user_name', data.name);
+
+                try {
+                    const meRes = await fetch(`${API_BASE_URL}/api/me`, {
+                        headers: {
+                            Authorization: `Bearer ${data.token}`
+                        }
+                    });
+                    if (meRes.ok) {
+                        const me = await meRes.json();
+                        localStorage.setItem('mindcare_user', JSON.stringify(me));
+                    } else {
+                        localStorage.setItem('mindcare_user', JSON.stringify({
+                            name: data.name || '',
+                            email: usernameEl.value.trim().toLowerCase()
+                        }));
+                    }
+                } catch (_) {
+                    localStorage.setItem('mindcare_user', JSON.stringify({
+                        name: data.name || '',
+                        email: usernameEl.value.trim().toLowerCase()
+                    }));
                 }
-                setTimeout(() => { window.location.href = data.redirect || 'dashboard.html'; }, 800);
+                setTimeout(() => { window.location.href = 'home.html'; }, 800);
             } else {
-                setError('passwordGroup', data.message || 'Invalid credentials. Please try again.');
+                setError('passwordGroup', data.error || data.message || 'Invalid credentials. Please try again.');
                 btn.disabled = false;
                 btnText.textContent = 'Sign In';
             }

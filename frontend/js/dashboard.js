@@ -3,46 +3,54 @@ document.addEventListener('DOMContentLoaded', () => {
     initMoodChart();
 });
 
-function loadDashboardData() {
-    const user = JSON.parse(localStorage.getItem('mindcare_user'));
-    if (!user || !user.email) return;
+const API_BASE_URL = 'http://127.0.0.1:5000';
 
-    fetch(`/api/dashboard?email=${user.email}`)
-        .then(res => res.json())
-        .then(data => {
-            if (data.error) return;
+async function loadDashboardData() {
+    const token = localStorage.getItem('mindcare_token');
+    if (!token) return loadDashboardDataFromLocal();
 
-            // Update DOM
-            document.getElementById('dashScore').textContent = data.score || '0';
-            document.getElementById('dashSessions').textContent = data.sessions || '0';
+    try {
+        const [quizRes, moodRes] = await Promise.all([
+            fetch(`${API_BASE_URL}/api/quiz/latest`, {
+                headers: { Authorization: `Bearer ${token}` }
+            }),
+            fetch(`${API_BASE_URL}/api/mood?days=30`, {
+                headers: { Authorization: `Bearer ${token}` }
+            })
+        ]);
 
-            // Update subjective text based on score
-            const scoreVal = parseInt(data.score);
-            const statusEl = document.getElementById('scoreStatus');
-            if (scoreVal >= 32) {
-                statusEl.textContent = 'Thriving & Excellent!';
-                statusEl.style.color = 'var(--success)';
-            } else if (scoreVal >= 24) {
-                statusEl.textContent = 'Looking good!';
-                statusEl.style.color = 'var(--primary)';
-            } else if (scoreVal >= 16) {
-                statusEl.textContent = 'Doing okay. Take it easy.';
-                statusEl.style.color = 'var(--warning)';
-            } else {
-                statusEl.textContent = 'Needs attention. Reach out for support.';
-                statusEl.style.color = '#e57373';
-            }
-            
-            // Re-init chart with real data
-            if (data.history) {
-                renderMoodChart(data.history);
-            }
-        })
-        .catch(err => {
-            console.error('Error loading dashboard data:', err);
-            // Fallback to localStorage if needed
-            loadDashboardDataFromLocal();
-        });
+        const latestQuiz = quizRes.ok ? await quizRes.json() : null;
+        const moodData = moodRes.ok ? await moodRes.json() : [];
+
+        const score = latestQuiz?.score ?? 0;
+        document.getElementById('dashScore').textContent = score;
+        document.getElementById('dashSessions').textContent = Array.isArray(moodData) ? moodData.length : 0;
+
+        const statusEl = document.getElementById('scoreStatus');
+        const scoreVal = parseInt(score, 10) || 0;
+        if (scoreVal >= 15) {
+            statusEl.textContent = 'Needs attention. Reach out for support.';
+            statusEl.style.color = '#e57373';
+        } else if (scoreVal >= 10) {
+            statusEl.textContent = 'Doing okay. Take it easy.';
+            statusEl.style.color = 'var(--warning)';
+        } else if (scoreVal >= 5) {
+            statusEl.textContent = 'Looking good!';
+            statusEl.style.color = 'var(--primary)';
+        } else {
+            statusEl.textContent = 'Thriving & Excellent!';
+            statusEl.style.color = 'var(--success)';
+        }
+
+        const chartHistory = (moodData || []).map((m, idx) => ({
+            session: `Check-in ${idx + 1}`,
+            val: m.score
+        }));
+        renderMoodChart(chartHistory);
+    } catch (err) {
+        console.error('Error loading dashboard data:', err);
+        loadDashboardDataFromLocal();
+    }
 }
 
 function loadDashboardDataFromLocal() {
