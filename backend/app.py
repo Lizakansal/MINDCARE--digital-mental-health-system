@@ -345,6 +345,30 @@ def login():
         return jsonify({"error": "Invalid email or password"}), 401
     return jsonify({"token": make_token(str(user["_id"])), "name": user["name"]}), 200
 
+@app.route("/api/forgot-password", methods=["POST"])
+def forgot_password():
+    data = request.get_json(silent=True) or {}
+    email = (data.get("email") or "").strip().lower()
+    new_password = data.get("newPassword") or ""
+
+    if not email or not new_password:
+        return jsonify({"error": "Email and new password are required"}), 400
+    if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
+        return jsonify({"error": "Invalid email address"}), 400
+    if len(new_password) < 6:
+        return jsonify({"error": "Password must be at least 6 characters"}), 400
+
+    user = users.find_one({"email": email})
+    if not user:
+        return jsonify({"error": "No account found for this email"}), 404
+
+    hashed = bcrypt.hashpw(new_password.encode(), bcrypt.gensalt())
+    users.update_one(
+        {"_id": user["_id"]},
+        {"$set": {"password": hashed, "password_updated_at": datetime.utcnow()}}
+    )
+    return jsonify({"message": "Password reset successful"}), 200
+
 @app.route("/api/me", methods=["GET"])
 @auth_required
 def get_me():
