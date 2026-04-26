@@ -465,11 +465,12 @@ def health():
 def chat():
     data = request.get_json(silent=True) or {}
     api_key = os.environ.get("GEMINI_API_KEY", "").strip()
+    model_name = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash").strip()
     if not api_key:
         return jsonify({"error": "GEMINI_API_KEY is not configured on the server"}), 500
     try:
         response = requests.post(
-            f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}",
+            f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={api_key}",
             json=data,
             timeout=25
         )
