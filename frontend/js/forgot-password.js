@@ -143,7 +143,7 @@ sendOtpBtn.addEventListener('click', async () => {
             setError(targetGroup, targetError, data.error || 'OTP send failed.');
         } else {
             setSuccess('otpGroup', 'otpError');
-            setInfo('otpError', `OTP sent. (Dev OTP: ${data.otp})`);
+            setInfo('otpError', data.message || 'OTP sent successfully.');
         }
     } catch (err) {
         const targetGroup = method === 'email' ? 'emailGroup' : 'phoneGroup';

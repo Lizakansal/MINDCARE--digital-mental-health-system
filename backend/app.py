@@ -261,12 +261,14 @@ from pymongo import MongoClient
 from datetime import datetime, timedelta
 from functools import wraps
 import random
+import smtplib
 from bson import ObjectId
 import bcrypt
 import jwt
 import os
 import re
 import requests
+from email.message import EmailMessage
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -283,6 +285,16 @@ users   = db["users"]
 moods   = db["moods"]
 quizzes = db["quizzes"]
 password_reset_otps = {}
+
+SMTP_HOST = os.environ.get("SMTP_HOST", "").strip()
+SMTP_PORT = int(os.environ.get("SMTP_PORT", "587"))
+SMTP_USER = os.environ.get("SMTP_USER", "").strip()
+SMTP_PASS = os.environ.get("SMTP_PASS", "").strip()
+SMTP_FROM = os.environ.get("SMTP_FROM", SMTP_USER).strip()
+
+SMS_API_URL = os.environ.get("SMS_API_URL", "").strip()
+SMS_API_KEY = os.environ.get("SMS_API_KEY", "").strip()
+SMS_SENDER_ID = os.environ.get("SMS_SENDER_ID", "").strip()
 
 def make_token(user_id):
     payload = {"sub": user_id, "exp": datetime.utcnow() + timedelta(days=7)}
@@ -356,6 +368,44 @@ def find_user_by_identifier(email, phone):
         return None
     return users.find_one(lookup)
 
+def send_reset_otp_email(recipient_email, otp_code):
+    if not (SMTP_HOST and SMTP_USER and SMTP_PASS and SMTP_FROM):
+        raise RuntimeError("Email service is not configured")
+
+    msg = EmailMessage()
+    msg["Subject"] = "MindCare Password Reset OTP"
+    msg["From"] = SMTP_FROM
+    msg["To"] = recipient_email
+    msg.set_content(
+        f"Your MindCare OTP is: {otp_code}\n\n"
+        "It is valid for 10 minutes.\n"
+        "If you did not request this, please ignore this email."
+    )
+
+    with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=15) as server:
+        server.starttls()
+        server.login(SMTP_USER, SMTP_PASS)
+        server.send_message(msg)
+
+def send_reset_otp_sms(phone, otp_code):
+    if not (SMS_API_URL and SMS_API_KEY):
+        raise RuntimeError("SMS service is not configured")
+
+    payload = {
+        "sender_id": SMS_SENDER_ID or "MINDCR",
+        "message": f"MindCare OTP: {otp_code}. Valid for 10 minutes. Do not share it.",
+        "language": "english",
+        "route": "q",
+        "numbers": phone
+    }
+    headers = {
+        "authorization": SMS_API_KEY,
+        "Content-Type": "application/json"
+    }
+    sms_response = requests.post(SMS_API_URL, json=payload, headers=headers, timeout=15)
+    if not sms_response.ok:
+        raise RuntimeError("Failed to send SMS OTP")
+
 @app.route("/api/login", methods=["POST"])
 def login():
     data = request.get_json(silent=True) or {}
@@ -394,11 +444,16 @@ def request_password_reset_otp():
         "expires_at": datetime.utcnow() + timedelta(minutes=10)
     }
 
-    # In production integrate SMS/Email provider. For local dev, return OTP in response.
-    return jsonify({
-        "message": f"OTP sent on your {method}",
-        "otp": otp_code
-    }), 200
+    try:
+        if method == "email":
+            send_reset_otp_email(email, otp_code)
+        else:
+            send_reset_otp_sms(phone, otp_code)
+    except Exception as e:
+        password_reset_otps.pop(identifier_key, None)
+        return jsonify({"error": str(e)}), 500
+
+    return jsonify({"message": f"OTP sent on your {method}"}), 200
 
 @app.route("/api/forgot-password/verify-otp", methods=["POST"])
 def verify_password_reset_otp():
