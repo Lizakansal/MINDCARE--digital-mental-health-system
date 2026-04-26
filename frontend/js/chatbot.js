@@ -276,7 +276,8 @@ async function sendMessage() {
         typingEl.remove();
         console.error('API Error:', error);
 
-        const errMsg = "Backend se connect nahi ho pa raha 😔 Kya aapne app.py run kiya hai? Urgent help: iCall 9152987821";
+        const reason = error?.message ? `\n\nDetails: ${error.message}` : '';
+        const errMsg = `Backend/AI response issue aa rahi hai 😔 Kya aapne app.py run kiya hai aur GEMINI_API_KEY set kiya hai?${reason}\n\nUrgent help: iCall 9152987821`;
 
         addMessageToUI(errMsg, 'bot', true);
     }
