@@ -66,14 +66,14 @@ function validateConfirm() {
 
 // Toggle password visibility
 toggleBtn.addEventListener('click', () => {
-    const hidden = passEl.type === 'password';
+    const willShow = passEl.type === 'password';
 
-    passEl.type = hidden ? 'text' : 'password';
-    confirmEl.type = hidden ? 'text' : 'password';
+    passEl.type = willShow ? 'text' : 'password';
+    confirmEl.type = willShow ? 'text' : 'password';
 
-    eyeIcon.className = hidden
-        ? 'fa-solid fa-eye-slash'
-        : 'fa-solid fa-eye';
+    eyeIcon.className = willShow
+        ? 'fa-solid fa-eye'
+        : 'fa-solid fa-eye-slash';
 });
 
 // Submit form
