@@ -2,6 +2,7 @@
    register.js — Form validation & interactivity
    Mental Health Support System
    ============================================ */
+const API_BASE_URL = 'http://127.0.0.1:5000';
 
 // ── Password show/hide toggle ──────────────────
 function setupToggle(btnId, inputId, iconId) {
@@ -42,15 +43,15 @@ passwordInput.addEventListener('input', () => {
 
     if (score < 2) {
         strengthBar.className  = 'strength-bar weak';
-        strengthText.textContent = '⚠ Weak password';
+        strengthText.textContent = window.t('⚠ Weak password');
         strengthText.className = 'strength-text weak';
     } else if (score < 4) {
         strengthBar.className  = 'strength-bar medium';
-        strengthText.textContent = '→ Medium strength';
+        strengthText.textContent = window.t('→ Medium strength');
         strengthText.className = 'strength-text medium';
     } else {
         strengthBar.className  = 'strength-bar strong';
-        strengthText.textContent = '✔ Strong password';
+        strengthText.textContent = window.t('✔ Strong password');
         strengthText.className = 'strength-text strong';
     }
 });
@@ -95,12 +96,11 @@ document.getElementById('email').addEventListener('blur', validateEmail);
 document.getElementById('phone').addEventListener('blur', validatePhone);
 document.getElementById('password').addEventListener('blur', validatePassword);
 document.getElementById('confirmPassword').addEventListener('blur', validateConfirm);
-document.getElementById('role').addEventListener('change', validateRole);
 
 function validateName() {
     const val = document.getElementById('fullname').value.trim();
-    if (!val) return setError('nameGroup', 'nameError', 'Full name is required.');
-    if (val.length < 2) return setError('nameGroup', 'nameError', 'Name must be at least 2 characters.');
+    if (!val) return setError('nameGroup', 'nameError', window.t('Full name is required.'));
+    if (val.length < 2) return setError('nameGroup', 'nameError', window.t('Name must be at least 2 characters.'));
     setSuccess('nameGroup', 'nameError');
     return true;
 }
@@ -108,8 +108,8 @@ function validateName() {
 function validateEmail() {
     const val = document.getElementById('email').value.trim();
     const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!val) return setError('emailGroup', 'emailError', 'Email address is required.');
-    if (!emailRe.test(val)) return setError('emailGroup', 'emailError', 'Please enter a valid email.');
+    if (!val) return setError('emailGroup', 'emailError', window.t('Email address is required.'));
+    if (!emailRe.test(val)) return setError('emailGroup', 'emailError', window.t('Please enter a valid email.'));
     setSuccess('emailGroup', 'emailError');
     return true;
 }
@@ -117,7 +117,7 @@ function validateEmail() {
 function validatePhone() {
     const val = document.getElementById('phone').value.trim();
     if (val && !/^[6-9]\d{9}$/.test(val)) {
-        return setError('phoneGroup', 'phoneError', 'Enter a valid 10-digit Indian mobile number.');
+        return setError('phoneGroup', 'phoneError', window.t('Enter a valid 10-digit Indian mobile number.'));
     }
     clearState('phoneGroup', 'phoneError');
     return true;
@@ -125,8 +125,8 @@ function validatePhone() {
 
 function validatePassword() {
     const val = document.getElementById('password').value;
-    if (!val) return setError('passwordGroup', 'passwordError', 'Password is required.');
-    if (val.length < 8) return setError('passwordGroup', 'passwordError', 'Password must be at least 8 characters.');
+    if (!val) return setError('passwordGroup', 'passwordError', window.t('Password is required.'));
+    if (val.length < 8) return setError('passwordGroup', 'passwordError', window.t('Password must be at least 8 characters.'));
     setSuccess('passwordGroup', 'passwordError');
     return true;
 }
@@ -134,23 +134,16 @@ function validatePassword() {
 function validateConfirm() {
     const pass    = document.getElementById('password').value;
     const confirm = document.getElementById('confirmPassword').value;
-    if (!confirm) return setError('confirmGroup', 'confirmError', 'Please confirm your password.');
-    if (pass !== confirm) return setError('confirmGroup', 'confirmError', 'Passwords do not match.');
+    if (!confirm) return setError('confirmGroup', 'confirmError', window.t('Please confirm your password.'));
+    if (pass !== confirm) return setError('confirmGroup', 'confirmError', window.t('Passwords do not match.'));
     setSuccess('confirmGroup', 'confirmError');
-    return true;
-}
-
-function validateRole() {
-    const val = document.getElementById('role').value;
-    if (!val) return setError('roleGroup', 'roleError', 'Please select your role.');
-    setSuccess('roleGroup', 'roleError');
     return true;
 }
 
 function validateTerms() {
     const checked = document.getElementById('agreeTerms').checked;
     if (!checked) {
-        document.getElementById('termsError').textContent = 'You must agree to the Terms of Service.';
+        document.getElementById('termsError').textContent = window.t('You must agree to the Terms of Service.');
         return false;
     }
     document.getElementById('termsError').textContent = '';
@@ -170,7 +163,6 @@ registerForm.addEventListener('submit', (e) => {
         validatePhone(),
         validatePassword(),
         validateConfirm(),
-        validateRole(),
         validateTerms()
     ].every(Boolean);
 
@@ -183,13 +175,13 @@ registerForm.addEventListener('submit', (e) => {
 
     // ---- Real API call ----
     const formData = {
-        fullname: document.getElementById('fullname').value.trim(),
+        name: document.getElementById('fullname').value.trim(),
         email: document.getElementById('email').value.trim(),
         phone: document.getElementById('phone').value.trim(),
         password: document.getElementById('password').value
     };
 
-    fetch('/register', {
+    fetch(`${API_BASE_URL}/api/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
@@ -197,28 +189,31 @@ registerForm.addEventListener('submit', (e) => {
     .then(async response => {
         const data = await response.json();
         if (response.ok) {
-            registerBtn.querySelector('.btn-text').textContent = 'Account Created!';
+            registerBtn.querySelector('.btn-text').textContent = window.t('Account Created!');
             registerBtn.querySelector('.btn-icon').className = 'fa-solid fa-check btn-icon';
             registerBtn.style.background = 'linear-gradient(135deg, #43C6AC, #2ea88d)';
 
             setTimeout(() => {
-                // Store user info for onboarding
-                localStorage.setItem('mindcare_user', JSON.stringify({ email: formData.email, name: formData.fullname }));
+                if (data.token) {
+                    localStorage.setItem('mindcare_token', data.token);
+                }
+                localStorage.setItem('mindcare_user_name', formData.name);
+                localStorage.setItem('mindcare_user', JSON.stringify({ email: formData.email, name: formData.name }));
                 localStorage.removeItem('mindcare_lang');
-                window.location.href = data.redirect || 'onboarding.html';
+                window.location.href = 'onboarding.html';
             }, 1200);
         } else {
-            setError('emailGroup', 'emailError', data.error || 'Registration failed. Try again.');
+            setError('emailGroup', 'emailError', window.t(data.error || 'Registration failed. Try again.'));
             registerBtn.disabled = false;
-            registerBtn.querySelector('.btn-text').textContent = 'Create Account';
+            registerBtn.querySelector('.btn-text').textContent = window.t('Create Account');
             registerBtn.querySelector('.btn-icon').className = 'fa-solid fa-user-plus btn-icon';
         }
     })
     .catch(err => {
         console.error('Registration error:', err);
-        setError('emailGroup', 'emailError', 'Network error. Is the server running?');
+        setError('emailGroup', 'emailError', window.t('Network error. Is the server running?'));
         registerBtn.disabled = false;
-        registerBtn.querySelector('.btn-text').textContent = 'Create Account';
+        registerBtn.querySelector('.btn-text').textContent = window.t('Create Account');
         registerBtn.querySelector('.btn-icon').className = 'fa-solid fa-user-plus btn-icon';
     });
 });

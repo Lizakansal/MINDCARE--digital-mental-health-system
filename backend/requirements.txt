@@ -1,4 +1,8 @@
 Flask==3.0.0
+Flask-Mail==0.10.0
 pymongo==4.6.1
 python-dotenv==1.0.0
 requests==2.31.0
+twilio==9.2.3
+
+
