@@ -269,6 +269,7 @@ import os
 import re
 import requests
 import secrets
+from twilio.rest import Client as TwilioClient
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -284,6 +285,9 @@ SMTP_USER = os.environ.get("SMTP_USER", "").strip()
 SMTP_PASS = os.environ.get("SMTP_PASS", "").strip()
 SMTP_FROM = os.environ.get("SMTP_FROM", SMTP_USER).strip()
 RESET_URL_BASE = os.environ.get("RESET_URL_BASE", "http://127.0.0.1:5500/reset-password.html").strip()
+TWILIO_ACCOUNT_SID = os.environ.get("TWILIO_ACCOUNT_SID", "").strip()
+TWILIO_AUTH_TOKEN = os.environ.get("TWILIO_AUTH_TOKEN", "").strip()
+TWILIO_FROM_PHONE = os.environ.get("TWILIO_FROM_PHONE", "").strip()
 
 client  = MongoClient(MONGO_URI)
 db      = client["mindcare"]
@@ -328,6 +332,7 @@ def register():
     data     = request.get_json(silent=True) or {}
     name     = (data.get("name") or "").strip()
     email    = (data.get("email") or "").strip().lower()
+    phone    = normalize_phone(data.get("phone"))
     password = data.get("password") or ""
     if not name or not email or not password:
         return jsonify({"error": "All fields are required"}), 400
@@ -337,9 +342,11 @@ def register():
         return jsonify({"error": "Password must be at least 6 characters"}), 400
     if users.find_one({"email": email}):
         return jsonify({"error": "Email already registered"}), 409
+    if phone and users.find_one({"phone": phone}):
+        return jsonify({"error": "Phone number already registered"}), 409
     hashed = bcrypt.hashpw(password.encode(), bcrypt.gensalt())
     result = users.insert_one({
-        "name": name, "email": email, "password": hashed,
+        "name": name, "email": email, "phone": phone, "password": hashed,
         "created_at": datetime.utcnow(), "streak": 0, "last_mood_date": None
     })
     return jsonify({"token": make_token(str(result.inserted_id)), "name": name}), 201
@@ -356,6 +363,18 @@ def login():
 
 def build_reset_link(reset_token):
     return f"{RESET_URL_BASE}?token={reset_token}"
+
+def normalize_phone(phone):
+    digits = re.sub(r"\D", "", phone or "")
+    if len(digits) == 10:
+        return f"+91{digits}"
+    if len(digits) == 12 and digits.startswith("91"):
+        return f"+{digits}"
+    if len(digits) == 13 and digits.startswith("0"):
+        return f"+{digits[1:]}"
+    if (phone or "").strip().startswith("+") and len(digits) >= 10:
+        return (phone or "").strip()
+    return ""
 
 def send_reset_email(to_email, reset_link):
     if not (SMTP_HOST and SMTP_USER and SMTP_PASS and SMTP_FROM):
@@ -380,10 +399,60 @@ def send_reset_email(to_email, reset_link):
 
     return True, ""
 
+def send_reset_sms(to_phone, otp_code):
+    if not (TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN and TWILIO_FROM_PHONE):
+        return False, "Twilio settings are incomplete"
+
+    message = (
+        f"Your MindCare password reset OTP is {otp_code}. "
+        "It is valid for 10 minutes. Do not share this code."
+    )
+    client = TwilioClient(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
+    client.messages.create(body=message, from_=TWILIO_FROM_PHONE, to=to_phone)
+    return True, ""
+
 @app.route("/forgot-password", methods=["POST"])
 @app.route("/api/forgot-password", methods=["POST"])
 def forgot_password():
     data = request.get_json(silent=True) or {}
+    method = (data.get("method") or "email").strip().lower()
+
+    if method == "phone":
+        raw_phone = data.get("phone")
+        phone = normalize_phone(raw_phone)
+        if not phone:
+            return jsonify({"error": "Valid phone number is required"}), 400
+
+        user = users.find_one({"phone": phone})
+        if not user:
+            return jsonify({"error": "No account found for this phone number"}), 404
+
+        otp_code = f"{secrets.randbelow(1000000):06d}"
+        otp_hash = bcrypt.hashpw(otp_code.encode(), bcrypt.gensalt())
+        expires_at = datetime.utcnow() + timedelta(minutes=10)
+        users.update_one(
+            {"_id": user["_id"]},
+            {"$set": {
+                "reset_otp_hash": otp_hash,
+                "reset_otp_expires_at": expires_at,
+                "reset_otp_attempts": 0
+            }}
+        )
+
+        try:
+            sms_sent, reason = send_reset_sms(phone, otp_code)
+        except Exception as e:
+            return jsonify({"error": f"Failed to send OTP SMS: {str(e)}"}), 500
+
+        if sms_sent:
+            return jsonify({"message": "OTP sent to your phone number"}), 200
+
+        # Fallback for local development when Twilio is not configured.
+        return jsonify({
+            "message": f"SMS not sent ({reason}). Use this local OTP.",
+            "devOtp": otp_code
+        }), 200
+
     email = (data.get("email") or "").strip().lower()
     if not email:
         return jsonify({"error": "Email is required"}), 400
@@ -439,6 +508,50 @@ def reset_password(token):
         {"_id": user["_id"]},
         {"$set": {"password": hashed, "password_updated_at": now},
          "$unset": {"reset_token": "", "reset_token_expires_at": ""}}
+    )
+    return jsonify({"message": "Password reset successful"}), 200
+
+@app.route("/api/reset-password/phone", methods=["POST"])
+def reset_password_phone():
+    data = request.get_json(silent=True) or {}
+    phone = normalize_phone(data.get("phone"))
+    otp = (data.get("otp") or "").strip()
+    new_password = data.get("password") or ""
+
+    if not phone:
+        return jsonify({"error": "Valid phone number is required"}), 400
+    if not otp or len(otp) != 6 or not otp.isdigit():
+        return jsonify({"error": "Valid 6-digit OTP is required"}), 400
+    if len(new_password) < 6:
+        return jsonify({"error": "Password must be at least 6 characters"}), 400
+
+    now = datetime.utcnow()
+    user = users.find_one({
+        "phone": phone,
+        "reset_otp_expires_at": {"$gt": now}
+    })
+    if not user or not user.get("reset_otp_hash"):
+        return jsonify({"error": "Invalid or expired OTP"}), 400
+
+    attempts = int(user.get("reset_otp_attempts", 0))
+    if attempts >= 5:
+        return jsonify({"error": "Too many OTP attempts. Request a new OTP"}), 429
+
+    if not bcrypt.checkpw(otp.encode(), user["reset_otp_hash"]):
+        users.update_one({"_id": user["_id"]}, {"$inc": {"reset_otp_attempts": 1}})
+        return jsonify({"error": "Invalid OTP"}), 400
+
+    hashed = bcrypt.hashpw(new_password.encode(), bcrypt.gensalt())
+    users.update_one(
+        {"_id": user["_id"]},
+        {"$set": {"password": hashed, "password_updated_at": now},
+         "$unset": {
+            "reset_otp_hash": "",
+            "reset_otp_expires_at": "",
+            "reset_otp_attempts": "",
+            "reset_token": "",
+            "reset_token_expires_at": ""
+         }}
     )
     return jsonify({"message": "Password reset successful"}), 200
 
