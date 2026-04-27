@@ -467,23 +467,37 @@ def forgot_password():
 
     reset_token = secrets.token_urlsafe(32)
     expires_at = datetime.utcnow() + timedelta(minutes=30)
+    reset_link = build_reset_link(reset_token)
+
+    delivery_ok = False
+    delivery_message = ""
+    try:
+        email_sent, reason = send_reset_email(email, reset_link)
+        if email_sent:
+            delivery_ok = True
+            delivery_message = "Password reset link sent to your email"
+        else:
+            # Fallback for local development when SMTP is not configured.
+            delivery_ok = True
+            delivery_message = f"Email not sent ({reason}). Use this local reset link."
+    except Exception as e:
+        # Exception fallback: still provide local reset link for recoverability.
+        delivery_ok = True
+        delivery_message = f"Email failed ({str(e)}). Use this local reset link."
+
+    if not delivery_ok:
+        return jsonify({"error": "Could not deliver reset link"}), 500
+
     users.update_one(
         {"_id": user["_id"]},
         {"$set": {"reset_token": reset_token, "reset_token_expires_at": expires_at}}
     )
 
-    reset_link = build_reset_link(reset_token)
-    try:
-        email_sent, reason = send_reset_email(email, reset_link)
-    except Exception as e:
-        return jsonify({"error": f"Failed to send reset email: {str(e)}"}), 500
+    if delivery_message == "Password reset link sent to your email":
+        return jsonify({"message": delivery_message}), 200
 
-    if email_sent:
-        return jsonify({"message": "Password reset link sent to your email"}), 200
-
-    # Fallback for local development when SMTP is not configured.
     return jsonify({
-        "message": f"Email not sent ({reason}). Use this local reset link.",
+        "message": delivery_message,
         "resetLink": reset_link
     }), 200
 
