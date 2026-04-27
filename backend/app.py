@@ -338,6 +338,8 @@ def register():
         return jsonify({"error": "All fields are required"}), 400
     if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
         return jsonify({"error": "Invalid email address"}), 400
+    if data.get("phone") and not phone:
+        return jsonify({"error": "Invalid phone number format"}), 400
     if len(password) < 6:
         return jsonify({"error": "Password must be at least 6 characters"}), 400
     if users.find_one({"email": email}):
