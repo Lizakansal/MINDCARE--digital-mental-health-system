@@ -260,15 +260,15 @@ from flask_cors import CORS
 from pymongo import MongoClient
 from datetime import datetime, timedelta
 from functools import wraps
-import random
-import smtplib
 from bson import ObjectId
+from email.message import EmailMessage
+import smtplib
 import bcrypt
 import jwt
 import os
 import re
 import requests
-from email.message import EmailMessage
+import secrets
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -278,23 +278,18 @@ CORS(app, supports_credentials=True)
 
 SECRET_KEY = os.environ.get("SECRET_KEY", "mindcare-secret-key-change-in-prod")
 MONGO_URI  = os.environ.get("MONGO_URI", "mongodb://localhost:27017/")
+SMTP_HOST = os.environ.get("SMTP_HOST", "").strip()
+SMTP_PORT = int(os.environ.get("SMTP_PORT", "587"))
+SMTP_USER = os.environ.get("SMTP_USER", "").strip()
+SMTP_PASS = os.environ.get("SMTP_PASS", "").strip()
+SMTP_FROM = os.environ.get("SMTP_FROM", SMTP_USER).strip()
+RESET_URL_BASE = os.environ.get("RESET_URL_BASE", "http://127.0.0.1:5500/reset-password.html").strip()
 
 client  = MongoClient(MONGO_URI)
 db      = client["mindcare"]
 users   = db["users"]
 moods   = db["moods"]
 quizzes = db["quizzes"]
-password_reset_otps = {}
-
-SMTP_HOST = os.environ.get("SMTP_HOST", "").strip()
-SMTP_PORT = int(os.environ.get("SMTP_PORT", "587"))
-SMTP_USER = os.environ.get("SMTP_USER", "").strip()
-SMTP_PASS = os.environ.get("SMTP_PASS", "").strip()
-SMTP_FROM = os.environ.get("SMTP_FROM", SMTP_USER).strip()
-
-SMS_API_URL = os.environ.get("SMS_API_URL", "").strip()
-SMS_API_KEY = os.environ.get("SMS_API_KEY", "").strip()
-SMS_SENDER_ID = os.environ.get("SMS_SENDER_ID", "").strip()
 
 def make_token(user_id):
     payload = {"sub": user_id, "exp": datetime.utcnow() + timedelta(days=7)}
@@ -333,7 +328,6 @@ def register():
     data     = request.get_json(silent=True) or {}
     name     = (data.get("name") or "").strip()
     email    = (data.get("email") or "").strip().lower()
-    phone    = (data.get("phone") or "").strip()
     password = data.get("password") or ""
     if not name or not email or not password:
         return jsonify({"error": "All fields are required"}), 400
@@ -345,152 +339,107 @@ def register():
         return jsonify({"error": "Email already registered"}), 409
     hashed = bcrypt.hashpw(password.encode(), bcrypt.gensalt())
     result = users.insert_one({
-        "name": name, "email": email, "phone": phone, "password": hashed,
+        "name": name, "email": email, "password": hashed,
         "created_at": datetime.utcnow(), "streak": 0, "last_mood_date": None
     })
     return jsonify({"token": make_token(str(result.inserted_id)), "name": name}), 201
 
-def normalize_phone(phone):
-    return re.sub(r"\D", "", phone or "")
-
-def build_otp_lookup(email, phone):
-    lookup = {}
-    if email:
-        lookup["email"] = email.strip().lower()
-    normalized_phone = normalize_phone(phone)
-    if normalized_phone:
-        lookup["phone"] = normalized_phone
-    return lookup
-
-def find_user_by_identifier(email, phone):
-    lookup = build_otp_lookup(email, phone)
-    if not lookup:
-        return None
-    return users.find_one(lookup)
-
-def send_reset_otp_email(recipient_email, otp_code):
-    if not (SMTP_HOST and SMTP_USER and SMTP_PASS and SMTP_FROM):
-        raise RuntimeError("Email service is not configured")
-
-    msg = EmailMessage()
-    msg["Subject"] = "MindCare Password Reset OTP"
-    msg["From"] = SMTP_FROM
-    msg["To"] = recipient_email
-    msg.set_content(
-        f"Your MindCare OTP is: {otp_code}\n\n"
-        "It is valid for 10 minutes.\n"
-        "If you did not request this, please ignore this email."
-    )
-
-    with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=15) as server:
-        server.starttls()
-        server.login(SMTP_USER, SMTP_PASS)
-        server.send_message(msg)
-
-def send_reset_otp_sms(phone, otp_code):
-    if not (SMS_API_URL and SMS_API_KEY):
-        raise RuntimeError("SMS service is not configured")
-
-    payload = {
-        "sender_id": SMS_SENDER_ID or "MINDCR",
-        "message": f"MindCare OTP: {otp_code}. Valid for 10 minutes. Do not share it.",
-        "language": "english",
-        "route": "q",
-        "numbers": phone
-    }
-    headers = {
-        "authorization": SMS_API_KEY,
-        "Content-Type": "application/json"
-    }
-    sms_response = requests.post(SMS_API_URL, json=payload, headers=headers, timeout=15)
-    if not sms_response.ok:
-        raise RuntimeError("Failed to send SMS OTP")
-
 @app.route("/api/login", methods=["POST"])
 def login():
-    data = request.get_json(silent=True) or {}
-    email = (data.get("email") or "").strip().lower()
+    data     = request.get_json(silent=True) or {}
+    email    = (data.get("email") or "").strip().lower()
     password = data.get("password") or ""
-    user = users.find_one({"email": email})
+    user     = users.find_one({"email": email})
     if not user or not bcrypt.checkpw(password.encode(), user["password"]):
         return jsonify({"error": "Invalid email or password"}), 401
     return jsonify({"token": make_token(str(user["_id"])), "name": user["name"]}), 200
 
-@app.route("/api/forgot-password/request-otp", methods=["POST"])
-def request_password_reset_otp():
+def build_reset_link(reset_token):
+    return f"{RESET_URL_BASE}?token={reset_token}"
+
+def send_reset_email(to_email, reset_link):
+    if not (SMTP_HOST and SMTP_USER and SMTP_PASS and SMTP_FROM):
+        return False, "SMTP settings are incomplete"
+    if "your_email@gmail.com" in {SMTP_USER, SMTP_FROM} or "your_app_password" == SMTP_PASS:
+        return False, "SMTP settings still use placeholder values"
+
+    msg = EmailMessage()
+    msg["Subject"] = "MindCare Password Reset"
+    msg["From"] = SMTP_FROM
+    msg["To"] = to_email
+    msg.set_content(
+        "We received a password reset request for your MindCare account.\n\n"
+        f"Use this link to reset your password (valid for 30 minutes):\n{reset_link}\n\n"
+        "If you did not request this, you can ignore this email."
+    )
+
+    with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=20) as server:
+        server.starttls()
+        server.login(SMTP_USER, SMTP_PASS)
+        server.send_message(msg)
+
+    return True, ""
+
+@app.route("/forgot-password", methods=["POST"])
+@app.route("/api/forgot-password", methods=["POST"])
+def forgot_password():
     data = request.get_json(silent=True) or {}
     email = (data.get("email") or "").strip().lower()
-    phone = normalize_phone(data.get("phone") or "")
-    method = (data.get("method") or "").strip().lower()
-
-    if method not in ["email", "phone"]:
-        return jsonify({"error": "Method must be email or phone"}), 400
-    if method == "email" and not email:
+    if not email:
         return jsonify({"error": "Email is required"}), 400
-    if method == "phone" and not phone:
-        return jsonify({"error": "Phone number is required"}), 400
-    if method == "email" and not re.match(r"[^@]+@[^@]+\.[^@]+", email):
+    if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
         return jsonify({"error": "Invalid email address"}), 400
 
-    user = find_user_by_identifier(email, phone)
+    user = users.find_one({"email": email})
     if not user:
-        return jsonify({"error": "No account found with provided details"}), 404
+        return jsonify({"error": "No account found for this email"}), 404
 
-    otp_code = str(random.randint(100000, 999999))
-    identifier_key = email if method == "email" else phone
-    password_reset_otps[identifier_key] = {
-        "otp": otp_code,
-        "user_id": str(user["_id"]),
-        "expires_at": datetime.utcnow() + timedelta(minutes=10)
-    }
+    reset_token = secrets.token_urlsafe(32)
+    expires_at = datetime.utcnow() + timedelta(minutes=30)
+    users.update_one(
+        {"_id": user["_id"]},
+        {"$set": {"reset_token": reset_token, "reset_token_expires_at": expires_at}}
+    )
 
+    reset_link = build_reset_link(reset_token)
     try:
-        if method == "email":
-            send_reset_otp_email(email, otp_code)
-        else:
-            send_reset_otp_sms(phone, otp_code)
+        email_sent, reason = send_reset_email(email, reset_link)
     except Exception as e:
-        password_reset_otps.pop(identifier_key, None)
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": f"Failed to send reset email: {str(e)}"}), 500
 
-    return jsonify({"message": f"OTP sent on your {method}"}), 200
+    if email_sent:
+        return jsonify({"message": "Password reset link sent to your email"}), 200
 
-@app.route("/api/forgot-password/verify-otp", methods=["POST"])
-def verify_password_reset_otp():
+    # Fallback for local development when SMTP is not configured.
+    return jsonify({
+        "message": f"Email not sent ({reason}). Use this local reset link.",
+        "resetLink": reset_link
+    }), 200
+
+@app.route("/reset-password/<token>", methods=["POST"])
+@app.route("/api/reset-password/<token>", methods=["POST"])
+def reset_password(token):
     data = request.get_json(silent=True) or {}
-    email = (data.get("email") or "").strip().lower()
-    phone = normalize_phone(data.get("phone") or "")
-    method = (data.get("method") or "").strip().lower()
-    otp = (data.get("otp") or "").strip()
-    new_password = data.get("newPassword") or ""
-
-    if method not in ["email", "phone"]:
-        return jsonify({"error": "Method must be email or phone"}), 400
-    if method == "email" and not email:
-        return jsonify({"error": "Email is required"}), 400
-    if method == "phone" and not phone:
-        return jsonify({"error": "Phone number is required"}), 400
-    if not otp:
-        return jsonify({"error": "OTP is required"}), 400
+    new_password = data.get("password") or ""
+    if not token:
+        return jsonify({"error": "Reset token is required"}), 400
     if len(new_password) < 6:
         return jsonify({"error": "Password must be at least 6 characters"}), 400
 
-    identifier_key = email if method == "email" else phone
-    otp_record = password_reset_otps.get(identifier_key)
-    if not otp_record:
-        return jsonify({"error": "OTP not requested or expired"}), 400
-    if datetime.utcnow() > otp_record["expires_at"]:
-        password_reset_otps.pop(identifier_key, None)
-        return jsonify({"error": "OTP expired, request a new one"}), 400
-    if otp_record["otp"] != otp:
-        return jsonify({"error": "Invalid OTP"}), 400
+    now = datetime.utcnow()
+    user = users.find_one({
+        "reset_token": token,
+        "reset_token_expires_at": {"$gt": now}
+    })
+    if not user:
+        return jsonify({"error": "Invalid or expired reset token"}), 400
 
     hashed = bcrypt.hashpw(new_password.encode(), bcrypt.gensalt())
     users.update_one(
-        {"_id": ObjectId(otp_record["user_id"])},
-        {"$set": {"password": hashed, "password_updated_at": datetime.utcnow()}}
+        {"_id": user["_id"]},
+        {"$set": {"password": hashed, "password_updated_at": now},
+         "$unset": {"reset_token": "", "reset_token_expires_at": ""}}
     )
-    password_reset_otps.pop(identifier_key, None)
     return jsonify({"message": "Password reset successful"}), 200
 
 @app.route("/api/me", methods=["GET"])
