@@ -1,6 +1,7 @@
 // ============================================================
 //  Mental Health Support System — Login Page Script
 // ============================================================
+const API_BASE_URL = 'http://127.0.0.1:5000';
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -42,7 +43,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function validateUsername() {
         const val = usernameEl.value.trim();
         if (!val) {
-            setError('usernameGroup', 'Username or email is required.');
+            setError('usernameGroup', window.t('Username or email is required.'));
             return false;
         }
         setValid('usernameGroup');
@@ -52,11 +53,11 @@ document.addEventListener('DOMContentLoaded', () => {
     function validatePassword() {
         const val = passwordEl.value;
         if (!val) {
-            setError('passwordGroup', 'Password is required.');
+            setError('passwordGroup', window.t('Password is required.'));
             return false;
         }
         if (val.length < 8) {
-            setError('passwordGroup', 'Password must be at least 8 characters.');
+            setError('passwordGroup', window.t('Password must be at least 8 characters.'));
             return false;
         }
         setValid('passwordGroup');
@@ -89,14 +90,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Loading state
         btn.disabled = true;
-        btnText.textContent = 'Signing in…';
+        btnText.textContent = window.t('Signing in…');
 
         try {
-            const response = await fetch(form.action, {
+            const response = await fetch(`${API_BASE_URL}/api/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    username: usernameEl.value.trim(),
+                    email: usernameEl.value.trim(),
                     password: passwordEl.value,
                 }),
             });
@@ -104,21 +105,41 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await response.json();
 
             if (response.ok) {
-                btnText.textContent = 'Success! Redirecting…';
-                // Save user info
-                if (data.user) {
-                    localStorage.setItem('mindcare_user', JSON.stringify(data.user));
+                btnText.textContent = window.t('Success! Redirecting…');
+                if (data.token) localStorage.setItem('mindcare_token', data.token);
+                if (data.name) localStorage.setItem('mindcare_user_name', data.name);
+
+                try {
+                    const meRes = await fetch(`${API_BASE_URL}/api/me`, {
+                        headers: {
+                            Authorization: `Bearer ${data.token}`
+                        }
+                    });
+                    if (meRes.ok) {
+                        const me = await meRes.json();
+                        localStorage.setItem('mindcare_user', JSON.stringify(me));
+                    } else {
+                        localStorage.setItem('mindcare_user', JSON.stringify({
+                            name: data.name || '',
+                            email: usernameEl.value.trim().toLowerCase()
+                        }));
+                    }
+                } catch (_) {
+                    localStorage.setItem('mindcare_user', JSON.stringify({
+                        name: data.name || '',
+                        email: usernameEl.value.trim().toLowerCase()
+                    }));
                 }
-                setTimeout(() => { window.location.href = data.redirect || 'dashboard.html'; }, 800);
+                setTimeout(() => { window.location.href = 'home.html'; }, 800);
             } else {
-                setError('passwordGroup', data.message || 'Invalid credentials. Please try again.');
+                setError('passwordGroup', window.t(data.error || data.message || 'Invalid credentials. Please try again.'));
                 btn.disabled = false;
-                btnText.textContent = 'Sign In';
+                btnText.textContent = window.t('Sign In');
             }
         } catch (err) {
-            setError('passwordGroup', 'Network error. Please check your connection.');
+            setError('passwordGroup', window.t('Network error. Please check your connection.'));
             btn.disabled = false;
-            btnText.textContent = 'Sign In';
+            btnText.textContent = window.t('Sign In');
         }
     });
 

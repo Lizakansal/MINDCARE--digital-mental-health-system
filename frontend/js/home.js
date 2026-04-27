@@ -1,4 +1,5 @@
 // ── Affirmations List ──────────────────────────
+const API_BASE_URL = 'http://127.0.0.1:5000';
 const affirmations = [
     "You are stronger than you think. One step at a time.",
     "It's okay to not be okay. Healing is not linear.",
@@ -8,11 +9,28 @@ const affirmations = [
     "You are not alone. There are people who care about you.",
     "Taking care of your mind is the bravest thing you can do.",
     "Breathe. This moment will pass.",
-    "आप अकेले नहीं हैं — मदद हमेशा पास है।",
     "Courage doesn't mean you don't feel fear. It means you move forward anyway.",
     "Rest is productive. Give yourself permission to pause.",
     "You have survived every difficult day so far. That's 100% success.",
 ];
+
+
+
+const affirmationsHi = [
+    "आप अपनी सोच से भी ज्यादा मजबूत हैं। एक बार में एक कदम बढ़ाएं।",
+    "ठीक न होना भी ठीक है। ठीक होने की प्रक्रिया सीधी रेखा में नहीं होती।",
+    "आपकी भावनाएं सही हैं। आप देखभाल और करुणा के पात्र हैं।",
+    "हर दिन एक नई शुरुआत है। आप यह कर सकते हैं।",
+    "छोटी प्रगति भी प्रगति है। खुद पर गर्व करें।",
+    "आप अकेले नहीं हैं। ऐसे लोग हैं जो आपकी परवाह करते हैं।",
+    "अपने मन का ख्याल रखना सबसे बहादुरी का काम है जो आप कर सकते हैं।",
+    "सांस लें। यह पल भी बीत जाएगा।",
+    "साहस का मतलब यह नहीं कि आपको डर नहीं लगता। इसका मतलब है कि आप फिर भी आगे बढ़ते हैं।",
+    "आराम करना भी उत्पादक है। खुद को रुकने की अनुमति दें।",
+    "आपने अब तक हर कठिन दिन का सामना किया है। यह 100% सफलता है।"
+];
+
+const activeAffirmations = (typeof APP_LANG !== 'undefined' && APP_LANG === 'hi') ? affirmationsHi : affirmations;
 
 let currentQuoteIndex = -1;
 
@@ -25,7 +43,7 @@ function showRandomQuote() {
 
     el.style.opacity = '0';
     setTimeout(() => {
-        el.textContent = affirmations[currentQuoteIndex];
+        el.textContent = activeAffirmations[currentQuoteIndex];
         el.style.opacity = '1';
     }, 300);
 }
@@ -37,12 +55,16 @@ function setGreeting() {
     if (hour >= 12 && hour < 17) greeting = 'Good Afternoon';
     else if (hour >= 17 && hour < 21) greeting = 'Good Evening';
     else if (hour >= 21 || hour < 5) greeting = 'Good Night';
+    if (window.t) {
+        greeting = window.t(greeting);
+    }
     document.getElementById('timeGreeting').textContent = greeting;
 }
 
 // ── Load User Name (from localStorage after login) ──
 function loadUserName() {
-    const name = localStorage.getItem('mindcare_user_name');
+    const storedUser = JSON.parse(localStorage.getItem('mindcare_user') || 'null');
+    const name = storedUser?.name || localStorage.getItem('mindcare_user_name');
     if (name) {
         document.getElementById('userName').textContent = name.split(' ')[0]; // First name only
     }
@@ -101,6 +123,21 @@ function initMoodTracker() {
             localStorage.setItem('mindcare_sessions', sessions);
             const sessionEl = document.getElementById('statSessions');
             if (sessionEl) sessionEl.textContent = sessions;
+
+            const token = localStorage.getItem('mindcare_token');
+            if (token) {
+                fetch(`${API_BASE_URL}/api/mood`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        score: moodVal,
+                        note: `Quick check-in: ${btn.dataset.mood}`
+                    })
+                }).catch(err => console.error('Mood sync failed:', err));
+            }
         });
     });
 }

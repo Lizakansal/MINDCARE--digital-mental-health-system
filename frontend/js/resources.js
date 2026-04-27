@@ -38,7 +38,7 @@ document.addEventListener("DOMContentLoaded", () => {
             renderResources();
         })
         .catch(() => {
-            loading.innerText = "Failed to load resources";
+            if (loading) loading.innerText = window.t("Failed to load resources");
         });
 
     /* ===============================
@@ -84,11 +84,11 @@ document.addEventListener("DOMContentLoaded", () => {
             ${media}
 
             <div class="content-overlay">
-                <h3>${resource.title || "Quotes"}</h3>
+                <h3>${window.t(resource.title || "Quotes")}</h3>
 
                 <div class="tags">
                     ${resource.tags
-                ? resource.tags.map(tag => `<span class="tag ${tag}">${tag}</span>`).join("")
+                ? resource.tags.map(tag => `<span class="tag ${tag}">${window.t(tag)}</span>`).join("")
                 : ""}
                 </div>
             </div>

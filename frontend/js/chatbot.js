@@ -8,12 +8,57 @@
 //  4. Smart Suggestions — context ke hisaab se chips change hote hain
 //  5. Emotion Indicator — header mein mood dikhata hai
 //  6. Human-like System Prompt — bilkul natural responses
+//  7. Language Support — Hindi / English based on onboarding selection
 //
 // API Key is now safely stored in the backend (app.py)
 // Hit our local Flask backend instead of Google directly
 const API_URL = "http://127.0.0.1:5000/api/chat";
 
-const SYSTEM_PROMPT = `You are Mia, MindCare's AI mental wellness companion. You are NOT a typical chatbot — you are warm, deeply human, and genuinely caring.
+// ============================================================
+//  LANGUAGE SUPPORT — reads onboarding selection
+// ============================================================
+const APP_LANG = localStorage.getItem('mindcare_lang') || 'en'; // 'en' or 'hi'
+
+// All UI strings in both languages
+const STRINGS = {
+    en: {
+        online: 'Online — Ready to help',
+        typing: 'Mia is typing...',
+        welcomeP1: "Hi! 👋 I'm MindCare AI — your mental wellness companion.",
+        welcomeP2: "I'm here to listen, support, and help you navigate your feelings. You can talk to me about anything — stress, anxiety, sleep, relationships, or just how your day went.",
+        welcomeP3: "<strong>How are you feeling today?</strong>",
+        chipsLabel: 'Quick topics:',
+        placeholder: 'Type your message here... (Press Enter to send)',
+        clearBtn: 'Clear Chat',
+        footerPrivacy: 'Your conversations are private',
+        footerCrisis: 'In crisis?',
+        errBackend: "Can't connect to backend 😔 Did you run app.py? Urgent help: iCall 9152987821",
+        errQuota: "Sorry, API quota limit reached (Too Many Requests). Please try again after some time or add a new API key.",
+        err503: "Google servers are overloaded right now (503 Error). Please try again in 1-2 minutes.",
+        miaReady: "Got it. I'm Mia, ready to support with genuine empathy and care. I will ALWAYS reply in English, no matter what language the user writes in."
+    },
+    hi: {
+        online: 'ऑनलाइन — मदद के लिए तैयार',
+        typing: 'Mia टाइप कर रही है...',
+        welcomeP1: "नमस्ते! 👋 मैं MindCare AI हूँ — आपकी मानसिक स्वास्थ्य साथी।",
+        welcomeP2: "मैं यहाँ आपकी बात सुनने, आपका साथ देने और आपकी भावनाओं को समझने के लिए हूँ। आप मुझसे कुछ भी बात कर सकते हैं — तनाव, चिंता, नींद, रिश्ते, या बस आपका दिन कैसा गया।",
+        welcomeP3: "<strong>आज आप कैसा महसूस कर रहे हैं?</strong>",
+        chipsLabel: 'जल्दी शुरू करें:',
+        placeholder: 'यहाँ अपना संदेश लिखें... (भेजने के लिए Enter दबाएं)',
+        clearBtn: 'चैट साफ करें',
+        footerPrivacy: 'आपकी बातें पूरी तरह निजी हैं',
+        footerCrisis: 'संकट में हैं?',
+        errBackend: "बैकएंड से कनेक्ट नहीं हो पा रहा 😔 क्या आपने app.py चलाया है? तुरंत मदद: iCall 9152987821",
+        errQuota: "माफ़ करें, API की सीमा समाप्त हो गई है। कृपया थोड़ी देर बाद कोशिश करें।",
+        err503: "Google के सर्वर अभी व्यस्त हैं (503 Error)। कृपया 1-2 मिनट बाद दोबारा कोशिश करें।",
+        miaReady: "समझ गई। मैं Mia हूँ, पूरी संवेदना और देखभाल के साथ आपकी मदद करने के लिए तैयार हूँ। मैं हमेशा हिंदी में जवाब दूंगी, चाहे उपयोगकर्ता किसी भी भाषा में लिखे।"
+    }
+};
+
+const S = STRINGS[APP_LANG]; // shortcut
+
+// Base system prompt (language-agnostic personality)
+const SYSTEM_PROMPT_BASE = `You are Mia, MindCare's AI mental wellness companion. You are NOT a typical chatbot — you are warm, deeply human, and genuinely caring.
 
 ## Your Personality:
 - You speak like a close, trusted friend who also happens to understand psychology
@@ -28,14 +73,13 @@ const SYSTEM_PROMPT = `You are Mia, MindCare's AI mental wellness companion. You
 ## How you respond:
 - SHORT when someone needs to vent (just listen and validate)
 - DETAILED when someone asks for techniques or explanations
-- PERSONAL — refer back to what they told you earlier ("You mentioned earlier that...")
+- PERSONAL — refer back to what they told you earlier
 - NEVER start with "I understand" or "That's great" — be more varied and natural
-- Mix Hindi and English naturally if the user does (Hinglish is fine)
 - Use emojis sparingly — only when they genuinely add warmth
 
 ## Response Structure (vary this, don't be repetitive):
 1. Acknowledge the emotion specifically (not generically)
-2. Reflect back what you heard (show you really listened)  
+2. Reflect back what you heard (show you really listened)
 3. Offer insight OR ask a deeper question OR suggest a technique
 4. End with ONE open question — never multiple questions at once
 
@@ -50,10 +94,17 @@ const SYSTEM_PROMPT = `You are Mia, MindCare's AI mental wellness companion. You
 
 ## Hard Rules:
 - NEVER diagnose
-- NEVER say "As an AI" or "I'm just a chatbot"  
+- NEVER say "As an AI" or "I'm just a chatbot"
 - If someone mentions suicide/self-harm → immediately and warmly provide: iCall: 9152987821
 - Keep responses under 150 words unless they ask for detailed explanation
 - Never repeat the same opening phrase twice in a conversation`;
+
+// Language enforcement appended to system prompt
+const LANG_RULE = APP_LANG === 'hi'
+    ? `\n\n## CRITICAL LANGUAGE RULE:\nYou MUST reply ONLY in Hindi (हिंदी). No matter what language the user writes in — English, Hinglish, or any other language — your response must ALWAYS be in Hindi. This is non-negotiable.`
+    : `\n\n## CRITICAL LANGUAGE RULE:\nYou MUST reply ONLY in English. No matter what language the user writes in — Hindi, Hinglish, or any other language — your response must ALWAYS be in English. This is non-negotiable.`;
+
+const SYSTEM_PROMPT = SYSTEM_PROMPT_BASE + LANG_RULE;
 
 // ============================================================
 //  UPGRADE 2 — MEMORY SYSTEM
@@ -131,14 +182,28 @@ function detectEmotion(text) {
 //  Emotion ke hisaab se suggestions change hoti hain
 // ============================================================
 const SMART_CHIPS = {
-    anxious: ['Tell me more about it', 'Breathing exercise batao', 'Yeh kab se ho raha hai?', '5-4-3-2-1 grounding try karein?'],
-    sad: ['Kya hua baat karo', 'Kab se aisa feel ho raha hai?', 'Koi hai baat karne ko?', 'Kuch helpful activity suggest karo'],
-    angry: ['Kya trigger hua?', 'Anger release technique batao', 'Deep breathing try karein?', 'Baat karo kya hua'],
-    stressed: ['Priority list banana hai?', 'Study break tips chahiye', 'Kya overwhelm kar raha hai?', '5 min relaxation technique'],
-    lonely: ['Baat karo — main hoon', 'Connection badhane ke tips', 'Self-care ideas chahiye?', 'Aaj kya kiya?'],
-    happy: ['Aur batao!', 'Kya hua acha?', 'Is feeling ko maintain kaise karein?'],
-    default: ['😟 I feel anxious', '😔 I feel low today', '😴 I can\'t sleep', '😤 I\'m very stressed', '💬 I need to talk', '🧘 Breathing exercise']
+    en: {
+        anxious: ['Tell me more', 'Breathing exercise', 'When did this start?', 'Try 5-4-3-2-1 grounding'],
+        sad: ['Talk to me', 'How long has this been?', 'Is someone there for you?', 'Suggest a helpful activity'],
+        angry: ['What triggered it?', 'Anger release technique', 'Try deep breathing', 'Tell me what happened'],
+        stressed: ['Make a priority list', 'Study break tips', 'What is overwhelming you?', '5 min relaxation'],
+        lonely: ['Talk to me — I\'m here', 'Tips to feel connected', 'Self-care ideas?', 'What did you do today?'],
+        happy: ['Tell me more!', 'What went well?', 'How to maintain this feeling?'],
+        default: ['😟 I feel anxious', '😔 I feel low today', '😴 I can\'t sleep', '😤 I\'m very stressed', '💬 I need to talk', '🧘 Breathing exercise']
+    },
+    hi: {
+        anxious: ['और बताइए', 'सांस लेने का व्यायाम', 'यह कब से हो रहा है?', '5-4-3-2-1 grounding try करें'],
+        sad: ['बात करें', 'कब से ऐसा लग रहा है?', 'कोई है बात करने को?', 'कोई helpful activity बताओ'],
+        angry: ['क्या trigger हुआ?', 'गुस्सा कम करने की technique', 'गहरी सांस लें', 'बताइए क्या हुआ'],
+        stressed: ['Priority list बनाएं', 'Study break tips', 'क्या overwhelm कर रहा है?', '5 मिनट relaxation'],
+        lonely: ['बात करें — मैं हूँ', 'जुड़ाव बढ़ाने के tips', 'Self-care ideas?', 'आज क्या किया?'],
+        happy: ['और बताइए!', 'क्या अच्छा हुआ?', 'इस feeling को बनाए कैसे रखें?'],
+        default: ['😟 मुझे चिंता हो रही है', '😔 आज मन ठीक नहीं', '😴 नींद नहीं आ रही', '😤 बहुत तनाव है', '💬 किसी से बात करनी है', '🧘 सांस लेने का अभ्यास']
+    }
 };
+
+// Active chip set based on selected language
+const ACTIVE_CHIPS = SMART_CHIPS[APP_LANG];
 
 // ============================================================
 //  DOM Elements
@@ -154,10 +219,47 @@ const suggestionChips = document.getElementById('suggestionChips');
 //  Page Load — restore previous session
 // ============================================================
 window.addEventListener('DOMContentLoaded', () => {
+    // ── Apply selected language to all UI elements ──
+    applyLanguageToUI();
+
     if (conversationHistory.length > 0) {
         restoreChatUI();
+    } else {
+        // Show default chips in selected language
+        updateChips('default');
     }
 });
+
+function applyLanguageToUI() {
+    // Welcome message
+    const p1 = document.getElementById('welcomeP1');
+    const p2 = document.getElementById('welcomeP2');
+    const p3 = document.getElementById('welcomeP3');
+    if (p1) p1.textContent = S.welcomeP1;
+    if (p2) p2.textContent = S.welcomeP2;
+    if (p3) p3.innerHTML = S.welcomeP3;
+
+    // Chips label
+    const chipsLabel = document.getElementById('chipsLabel');
+    if (chipsLabel) chipsLabel.textContent = S.chipsLabel;
+
+    // Input placeholder
+    const inp = document.getElementById('userInput');
+    if (inp) inp.placeholder = S.placeholder;
+
+    // Clear button text
+    const clearText = document.getElementById('clearBtnText');
+    if (clearText) clearText.textContent = S.clearBtn;
+
+    // Footer
+    const fp = document.getElementById('footerPrivacy');
+    const fc = document.getElementById('footerCrisis');
+    if (fp) fp.textContent = S.footerPrivacy;
+    if (fc) fc.textContent = S.footerCrisis;
+
+    // Status bar
+    if (botStatus) botStatus.textContent = S.online;
+}
 
 function restoreChatUI() {
     // Pehle welcome message ke baad history restore karo
@@ -180,7 +282,7 @@ function sendChip(chipEl) {
 
 function updateChips(emotion) {
     if (!suggestionChips) return;
-    const chips = SMART_CHIPS[emotion] || SMART_CHIPS.default;
+    const chips = ACTIVE_CHIPS[emotion] || ACTIVE_CHIPS.default;
     const chipsRow = suggestionChips.querySelector('.chips-row');
     if (!chipsRow) return;
 
@@ -216,7 +318,7 @@ clearBtn.addEventListener('click', () => {
     sessionStorage.removeItem(HISTORY_KEY);
 
     updateChips('default');
-    botStatus.textContent = 'Online — Ready to help';
+    botStatus.textContent = S.online;
     updateEmotionIndicator(null);
 });
 
@@ -250,7 +352,7 @@ async function sendMessage() {
 
     // Disable send, show typing
     sendBtn.disabled = true;
-    botStatus.textContent = 'Mia is typing...';
+    botStatus.textContent = S.typing;
 
     const typingEl = showTypingIndicator();
 
@@ -273,16 +375,25 @@ async function sendMessage() {
         updateChips(emotionData?.emotion || 'default');
 
     } catch (error) {
+        // Rollback history so it doesn't get corrupted
+        conversationHistory.pop();
+        
         typingEl.remove();
         console.error('API Error:', error);
 
-        const errMsg = "Backend se connect nahi ho pa raha 😔 Kya aapne app.py run kiya hai? Urgent help: iCall 9152987821";
+        let errMsg = S.errBackend;
+        
+        if (error.message && (error.message.includes('quota') || error.message.includes('429'))) {
+            errMsg = S.errQuota;
+        } else if (error.message && error.message.includes('503')) {
+            errMsg = S.err503;
+        }
 
         addMessageToUI(errMsg, 'bot', true);
     }
 
     sendBtn.disabled = false;
-    botStatus.textContent = 'Online — Ready to help';
+    botStatus.textContent = S.online;
     scrollToBottom();
 }
 
@@ -300,7 +411,7 @@ async function callGeminiAPI(emotionData) {
 
     const messages = [
         { role: 'user', parts: [{ text: systemWithContext }] },
-        { role: 'model', parts: [{ text: `Got it. I'm Mia, ready to support with genuine empathy and care.` }] },
+        { role: 'model', parts: [{ text: S.miaReady }] },
         ...conversationHistory
     ];
 
@@ -311,7 +422,6 @@ async function callGeminiAPI(emotionData) {
             contents: messages,
             generationConfig: {
                 temperature: 0.92,      // High creativity — human-like variation
-                maxOutputTokens: 400,   // Concise but complete
                 topP: 0.95,
                 topK: 40
             }
@@ -411,7 +521,7 @@ function updateEmotionIndicator(emotionData) {
     if (!statusEl) return;
 
     if (!emotionData) {
-        statusEl.textContent = 'Online — Ready to help';
+        statusEl.textContent = S.online;
         statusEl.style.color = '';
         return;
     }
@@ -420,7 +530,7 @@ function updateEmotionIndicator(emotionData) {
 
     // Reset after 4 seconds
     setTimeout(() => {
-        statusEl.textContent = 'Online — Ready to help';
+        statusEl.textContent = S.online;
         statusEl.style.color = '';
     }, 4000);
 }

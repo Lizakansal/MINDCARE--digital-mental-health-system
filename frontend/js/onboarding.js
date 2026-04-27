@@ -2,6 +2,7 @@
    onboarding.js — MindCare Onboarding Quiz
    Bilingual (English / Hindi), 10 questions
    ============================================ */
+const API_BASE_URL = 'http://127.0.0.1:5000';
 
 // ── Quiz Data ───────────────────────────────
 const QUIZ = [
@@ -431,19 +432,21 @@ function showResults() {
     localStorage.setItem('mindcare_quiz', JSON.stringify(quizResult));
 
     // ---- Send to Backend ----
-    const user = JSON.parse(localStorage.getItem('mindcare_user'));
-    if (user && user.email) {
-        fetch('/submit', {
+    const token = localStorage.getItem('mindcare_token');
+    if (token) {
+        // Backend quiz expects 5 answers, each value 0-3.
+        const apiAnswers = answers.slice(0, 5).map((ans) => (ans === null ? 0 : ans));
+        fetch(`${API_BASE_URL}/api/quiz/submit`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                ...quizResult,
-                email: user.email
-            })
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`
+            },
+            body: JSON.stringify({ answers: apiAnswers })
         })
-        .then(res => res.json())
-        .then(data => console.log('Quiz saved to server:', data))
-        .catch(err => console.error('Error saving quiz:', err));
+            .then(res => res.json())
+            .then(data => console.log('Quiz saved to server:', data))
+            .catch(err => console.error('Error saving quiz:', err));
     }
 }
 

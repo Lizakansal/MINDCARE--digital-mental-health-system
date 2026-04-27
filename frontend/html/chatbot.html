@@ -55,38 +55,32 @@
                     </div>
                     <div>
                         <h2>MindCare AI</h2>
-                        <p id="botStatus">Online — Ready to help</p>
+                        <p id="botStatus">Online &mdash; Ready to help</p>
                     </div>
                 </div>
                 <button class="clear-btn" id="clearBtn" title="Clear chat">
-                    <i class="fa-solid fa-broom"></i> Clear Chat
+                    <i class="fa-solid fa-broom"></i> <span id="clearBtnText">Clear Chat</span>
                 </button>
             </div>
 
             <!-- Messages Container -->
             <div class="chat-messages" id="chatMessages">
 
-                <!-- Welcome message — shown by default -->
-                <div class="message bot-message">
+                <!-- Welcome message — shown by default, updated by JS based on language -->
+                <div class="message bot-message" id="welcomeMsg">
                     <div class="msg-avatar"><i class="fa-solid fa-robot"></i></div>
-                    <div class="msg-content">
-                        <p>Hi! 👋 I'm MindCare AI — your mental wellness companion.</p>
-                        <p>I'm here to listen, support, and help you navigate your feelings. You can talk to me about
-                            anything — stress, anxiety, sleep, relationships, or just how your day went.</p>
-                        <p><strong>How are you feeling today?</strong></p>
+                    <div class="msg-content" id="welcomeContent">
+                        <p id="welcomeP1">Hi! 👋 I'm MindCare AI — your mental wellness companion.</p>
+                        <p id="welcomeP2">I'm here to listen, support, and help you navigate your feelings. You can talk to me about anything — stress, anxiety, sleep, relationships, or just how your day went.</p>
+                        <p id="welcomeP3"><strong>How are you feeling today?</strong></p>
                     </div>
                 </div>
 
                 <!-- Quick suggestion chips -->
                 <div class="suggestion-chips" id="suggestionChips">
-                    <p class="chips-label">Quick topics:</p>
+                    <p class="chips-label" id="chipsLabel">Quick topics:</p>
                     <div class="chips-row">
-                        <button class="chip" onclick="sendChip(this)">😟 I feel anxious</button>
-                        <button class="chip" onclick="sendChip(this)">😔 I feel low today</button>
-                        <button class="chip" onclick="sendChip(this)">😴 I can't sleep</button>
-                        <button class="chip" onclick="sendChip(this)">😤 I'm very stressed</button>
-                        <button class="chip" onclick="sendChip(this)">💬 I need someone to talk to</button>
-                        <button class="chip" onclick="sendChip(this)">🧘 Suggest a breathing exercise</button>
+                        <!-- Chips are injected by JS based on language -->
                     </div>
                 </div>
 
@@ -103,8 +97,8 @@
                 </div>
                 <p class="input-footer">
                     <i class="fa-solid fa-shield-heart"></i>
-                    Your conversations are private &nbsp;|&nbsp;
-                    In crisis? <a href="tel:9152987821"><strong>iCall: 9152987821</strong></a>
+                    <span id="footerPrivacy">Your conversations are private</span> &nbsp;|&nbsp;
+                    <span id="footerCrisis">In crisis?</span> <a href="tel:9152987821"><strong>iCall: 9152987821</strong></a>
                 </p>
             </div>
 
@@ -112,6 +106,7 @@
 
     </div>
 
+    <script src="../js/i18n.js"></script>
     <script src="../js/chatbot.js?v=2"></script>
 </body>
 
